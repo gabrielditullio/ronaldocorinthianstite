@@ -489,6 +489,7 @@ export type Database = {
           month_year: string
           proposals_sent: number | null
           qualification_rate: number | null
+          total_billed: number | null
           total_received: number | null
           total_revenue: number | null
           user_id: string
@@ -506,6 +507,7 @@ export type Database = {
           month_year: string
           proposals_sent?: number | null
           qualification_rate?: number | null
+          total_billed?: number | null
           total_received?: number | null
           total_revenue?: number | null
           user_id: string
@@ -523,6 +525,7 @@ export type Database = {
           month_year?: string
           proposals_sent?: number | null
           qualification_rate?: number | null
+          total_billed?: number | null
           total_received?: number | null
           total_revenue?: number | null
           user_id?: string
@@ -737,6 +740,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      session_metrics: {
+        Row: {
+          action_items: string | null
+          created_at: string
+          id: string
+          key_decisions: string | null
+          notes: string | null
+          session_date: string
+          user_id: string
+        }
+        Insert: {
+          action_items?: string | null
+          created_at?: string
+          id?: string
+          key_decisions?: string | null
+          notes?: string | null
+          session_date?: string
+          user_id: string
+        }
+        Update: {
+          action_items?: string | null
+          created_at?: string
+          id?: string
+          key_decisions?: string | null
+          notes?: string | null
+          session_date?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       team_members: {
         Row: {
