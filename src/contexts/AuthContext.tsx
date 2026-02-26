@@ -40,7 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .select("*")
       .eq("id", userId)
       .single();
-    setProfile(data as Profile | null);
+    setProfile(data as unknown as Profile | null);
   };
 
   const refreshProfile = async () => {
