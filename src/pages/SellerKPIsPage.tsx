@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { EmptyState } from "@/components/ui/page-states";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -252,7 +253,15 @@ export default function SellerKPIsPage() {
           </div>
         </div>
 
-        {!viewAll && (
+        {!viewAll && teamMembers.length === 0 ? (
+          <EmptyState
+            icon={Users}
+            title="Adicione vendedores para começar a rastrear"
+            description="Cadastre membros do time para registrar KPIs diários."
+            actionLabel="Gerenciar Equipe"
+            actionTo="/team"
+          />
+        ) : !viewAll && (
           <>
             {/* Performance cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

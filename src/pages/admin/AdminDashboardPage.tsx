@@ -17,7 +17,7 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function AdminDashboardPage() {
-  const { data: users = [] } = useQuery({
+  const { data: users = [], isLoading } = useQuery({
     queryKey: ["admin-all-users"],
     queryFn: async () => {
       const { data, error } = await supabase.from("profiles").select("*");
@@ -91,6 +91,18 @@ export default function AdminDashboardPage() {
       <div className="space-y-6">
         <h1 className="text-2xl font-bold text-foreground">Dashboard Admin</h1>
 
+        {isLoading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 animate-fade-in">
+            {[1,2,3,4,5].map(i => <div key={i} className="h-24 rounded-lg bg-[#E8E0D8] animate-pulse" />)}
+          </div>
+        ) : users.length === 0 ? (
+          <div className="flex flex-col items-center py-16 text-center">
+            <Users className="h-12 w-12 text-muted-foreground/40 mb-4" strokeWidth={1.5} />
+            <p className="text-lg font-semibold">Aguardando primeiras vendas</p>
+            <p className="text-sm text-muted-foreground mt-1">Os dados aparecerão aqui quando houver usuários cadastrados.</p>
+          </div>
+        ) : (
+        <>
         {/* Summary Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           {summaryCards.map((card) => (
@@ -150,6 +162,8 @@ export default function AdminDashboardPage() {
             </CardContent>
           </Card>
         </div>
+        </>
+        )}
       </div>
     </AdminLayout>
   );

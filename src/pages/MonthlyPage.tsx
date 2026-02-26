@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { EmptyState } from "@/components/ui/page-states";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -311,15 +312,13 @@ export default function MonthlyPage() {
         </Card>
 
         {last6.length < 2 ? (
-          <Card>
-            <CardContent className="py-12 text-center">
-              <TrendingUp className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-lg font-medium text-foreground">Continue alimentando o Funil de Vendas</p>
-              <p className="text-muted-foreground mt-1">
-                Com 2+ meses de dados, você verá tendências aqui.
-              </p>
-            </CardContent>
-          </Card>
+          <EmptyState
+            icon={TrendingUp}
+            title="Comece inserindo os dados do seu primeiro mês"
+            description="Com 2+ meses de dados, você verá tendências e comparativos aqui."
+            actionLabel="Criar Snapshot"
+            onAction={() => generateMutation.mutate()}
+          />
         ) : (
           <>
             {/* Metrics Table */}
