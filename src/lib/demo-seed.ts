@@ -196,9 +196,9 @@ export async function seedDemoData(
 
   // Step 7: Leads + Pipeline Meetings
   onStep(7);
-  const stages = ["lead", "qualification", "meeting", "proposal", "closed_won"];
-  const stageWeights = [0.30, 0.25, 0.20, 0.15, 0.10];
-  const sources = ["Tráfego Pago", "Indicação", "Outbound", "Orgânico"];
+  const stages = ["lead", "qualification", "meeting", "proposal", "closed_won", "closed_lost"];
+  const stageWeights = [0.30, 0.25, 0.20, 0.10, 0.10, 0.05];
+  const sources = ["traffic", "inbound", "referral", "outbound", "other"];
   const leadRows: any[] = [];
   for (let i = 0; i < 50; i++) {
     const r = Math.random();
