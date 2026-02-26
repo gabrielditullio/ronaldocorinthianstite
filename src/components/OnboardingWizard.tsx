@@ -102,19 +102,19 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background p-4">
       <div className="w-full max-w-lg space-y-6">
         {/* Step indicator */}
-        <div className="flex items-center justify-center gap-2">
+        <div className="flex items-center justify-center gap-3 sm:gap-2">
           {[1, 2, 3].map((s) => (
             <div
               key={s}
-              className={`flex items-center justify-center h-9 w-9 rounded-full text-sm font-bold transition-colors ${
+              className={`flex items-center justify-center rounded-full text-sm font-bold transition-colors h-3 w-3 sm:h-9 sm:w-9 ${
                 s === step
-                  ? "bg-primary text-primary-foreground"
+                  ? "bg-primary text-primary-foreground sm:text-sm text-[0px]"
                   : s < step
-                  ? "bg-primary/20 text-primary"
-                  : "bg-muted text-muted-foreground"
+                  ? "bg-primary/40 sm:bg-primary/20 text-primary sm:text-sm text-[0px]"
+                  : "bg-muted text-muted-foreground sm:text-sm text-[0px]"
               }`}
             >
-              {s}
+              <span className="hidden sm:inline">{s}</span>
             </div>
           ))}
         </div>

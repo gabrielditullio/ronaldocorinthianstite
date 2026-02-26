@@ -305,7 +305,7 @@ export default function PaidTrafficPage() {
 
         {/* Daily Table */}
         <Card className="overflow-hidden">
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto [&_table_td:first-child]:sticky [&_table_td:first-child]:left-0 [&_table_td:first-child]:z-10 [&_table_td:first-child]:bg-inherit [&_table_th:first-child]:sticky [&_table_th:first-child]:left-0 [&_table_th:first-child]:z-10">
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-primary text-primary-foreground">
@@ -353,7 +353,7 @@ export default function PaidTrafficPage() {
 
         {/* Save */}
         <div className="flex justify-end">
-          <Button onClick={handleSave} disabled={saving} size="lg" className="px-8">
+          <Button onClick={handleSave} disabled={saving} size="lg" className="w-full sm:w-auto px-8">
             {saving ? "Salvando…" : "Salvar Dados"}
           </Button>
         </div>

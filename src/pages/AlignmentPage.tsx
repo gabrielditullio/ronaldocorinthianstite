@@ -129,7 +129,7 @@ export default function AlignmentPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
               {[
                 { label: "Primeiro Contato", value: "até 48h", sub: "após handoff" },
                 { label: "Discovery", value: "até 5 dias", sub: "após contato" },

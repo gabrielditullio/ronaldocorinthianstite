@@ -265,7 +265,7 @@ export default function SellerKPIsPage() {
             {/* Daily grid */}
             <Card>
               <CardContent className="p-0">
-                <div className="overflow-auto">
+                <div className="overflow-auto [&_table_td:first-child]:sticky [&_table_td:first-child]:left-0 [&_table_td:first-child]:z-10 [&_table_td:first-child]:bg-inherit [&_table_th:first-child]:sticky [&_table_th:first-child]:left-0 [&_table_th:first-child]:z-10">
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-[#5B2333] hover:bg-[#5B2333]">
@@ -308,7 +308,7 @@ export default function SellerKPIsPage() {
               </CardContent>
             </Card>
 
-            <Button onClick={handleSave} disabled={saving} className="bg-[#5B2333] hover:bg-[#5B2333]/90 text-white">
+            <Button onClick={handleSave} disabled={saving} className="w-full sm:w-auto bg-[#5B2333] hover:bg-[#5B2333]/90 text-white">
               {saving ? "Salvando..." : "Salvar"}
             </Button>
           </>

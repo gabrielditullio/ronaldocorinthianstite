@@ -63,7 +63,7 @@ export function LeadModal({ open, onClose, lead, teamMembers, onSave, saving }: 
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-lg max-h-[100dvh] sm:max-h-[90vh] h-full sm:h-auto overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{lead ? "Editar Lead" : "Novo Lead"}</DialogTitle>
         </DialogHeader>
