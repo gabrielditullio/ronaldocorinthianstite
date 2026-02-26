@@ -58,6 +58,33 @@ export type Database = {
           },
         ]
       }
+      admin_action_logs: {
+        Row: {
+          action: string
+          admin_user_id: string
+          created_at: string
+          id: string
+          notes: string | null
+          target_user_id: string
+        }
+        Insert: {
+          action: string
+          admin_user_id: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          target_user_id: string
+        }
+        Update: {
+          action?: string
+          admin_user_id?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          target_user_id?: string
+        }
+        Relationships: []
+      }
       cac_calculations: {
         Row: {
           avg_ticket: number | null
