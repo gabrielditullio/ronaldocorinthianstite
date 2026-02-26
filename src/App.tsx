@@ -13,6 +13,7 @@ import PlaceholderPage from "./pages/PlaceholderPage";
 import SettingsPage from "./pages/SettingsPage";
 import TeamPage from "./pages/TeamPage";
 import FunnelPage from "./pages/FunnelPage";
+import FullFunnelPage from "./pages/FullFunnelPage";
 import PipelinePage from "./pages/PipelinePage";
 import DiagnosticsPage from "./pages/DiagnosticsPage";
 import SDRPerformancePage from "./pages/SDRPerformancePage";
@@ -52,6 +53,7 @@ const App = () => (
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/funnel" element={<ProtectedRoute><FunnelPage /></ProtectedRoute>} />
+            <Route path="/funil" element={<ProtectedRoute><FullFunnelPage /></ProtectedRoute>} />
             <Route path="/pipeline" element={<ProtectedRoute><PipelinePage /></ProtectedRoute>} />
             <Route path="/team" element={<ProtectedRoute><TeamPage /></ProtectedRoute>} />
             <Route path="/diagnostics" element={<ProtectedRoute><DiagnosticsPage /></ProtectedRoute>} />
