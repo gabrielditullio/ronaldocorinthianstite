@@ -43,7 +43,7 @@ const defaultForm: FormData = {
   email: "",
   phone: "",
   monthly_lead_goal: 25,
-  monthly_revenue_goal: 100000,
+  monthly_revenue_goal: 100000
 };
 
 function formatCurrency(value: number): string {
@@ -66,18 +66,18 @@ export default function TeamPage() {
   const { data: members = [], isLoading } = useQuery({
     queryKey: ["team_members"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("team_members")
-        .select("*")
-        .order("name");
+      const { data, error } = await supabase.
+      from("team_members").
+      select("*").
+      order("name");
       if (error) throw error;
       return data as TeamMember[];
     },
-    enabled: !!user,
+    enabled: !!user
   });
 
   const upsertMutation = useMutation({
-    mutationFn: async (data: { id?: string } & FormData) => {
+    mutationFn: async (data: {id?: string;} & FormData) => {
       const payload = {
         name: data.name.trim(),
         role: data.role,
@@ -85,7 +85,7 @@ export default function TeamPage() {
         phone: data.phone.trim() || null,
         monthly_lead_goal: data.monthly_lead_goal,
         monthly_revenue_goal: data.monthly_revenue_goal,
-        user_id: user!.id,
+        user_id: user!.id
       };
       if (data.id) {
         const { error } = await supabase.from("team_members").update(payload).eq("id", data.id);
@@ -100,16 +100,16 @@ export default function TeamPage() {
       toast.success(editingId ? "Membro atualizado!" : "Membro adicionado!");
       closeModal();
     },
-    onError: () => toast.error("Erro ao salvar membro."),
+    onError: () => toast.error("Erro ao salvar membro.")
   });
 
   const toggleMutation = useMutation({
-    mutationFn: async ({ id, is_active }: { id: string; is_active: boolean }) => {
+    mutationFn: async ({ id, is_active }: {id: string;is_active: boolean;}) => {
       const { error } = await supabase.from("team_members").update({ is_active }).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["team_members"] }),
-    onError: () => toast.error("Erro ao atualizar status."),
+    onError: () => toast.error("Erro ao atualizar status.")
   });
 
   const closeModal = () => {
@@ -125,7 +125,7 @@ export default function TeamPage() {
       email: m.email || "",
       phone: m.phone || "",
       monthly_lead_goal: m.monthly_lead_goal ?? 25,
-      monthly_revenue_goal: m.monthly_revenue_goal ?? 100000,
+      monthly_revenue_goal: m.monthly_revenue_goal ?? 100000
     });
     setEditingId(m.id);
     setOpen(true);
@@ -147,7 +147,7 @@ export default function TeamPage() {
             <h1 className="text-2xl font-bold">Meu Time</h1>
             <p className="text-muted-foreground">Gerencie seus SDRs e Closers</p>
           </div>
-          <Button onClick={() => { setForm(defaultForm); setEditingId(null); setOpen(true); }}>
+          <Button onClick={() => {setForm(defaultForm);setEditingId(null);setOpen(true);}}>
             <Plus className="mr-2 h-4 w-4" /> Adicionar Membro
           </Button>
         </div>
@@ -160,12 +160,12 @@ export default function TeamPage() {
           </TabsList>
 
           <TabsContent value={tab} className="mt-4">
-            {isLoading ? (
-              <div className="space-y-3 animate-fade-in">
-                {[1,2,3].map(i => <div key={i} className="h-14 rounded-md bg-[#E8E0D8] animate-pulse" />)}
-              </div>
-            ) : filtered.length === 0 ? (
-              <Card>
+            {isLoading ?
+            <div className="space-y-3 animate-fade-in">
+                {[1, 2, 3].map((i) => <div key={i} className="h-14 rounded-md bg-muted animate-pulse" />)}
+              </div> :
+            filtered.length === 0 ?
+            <Card>
                 <CardContent className="flex flex-col items-center justify-center py-16 text-center">
                   <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
                     <Users className="h-8 w-8 text-muted-foreground" />
@@ -175,11 +175,11 @@ export default function TeamPage() {
                     Adicione seu primeiro membro do time para começar
                   </p>
                 </CardContent>
-              </Card>
-            ) : (
-              <Card>
-                <CardContent className="p-0 overflow-x-auto">
-                   <Table>
+              </Card> :
+
+            <Card>
+                <CardContent className="p-0">
+                  <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead>Nome</TableHead>
@@ -192,8 +192,8 @@ export default function TeamPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filtered.map((m) => (
-                        <TableRow key={m.id} className={m.is_active === false ? "opacity-50" : ""}>
+                      {filtered.map((m) =>
+                    <TableRow key={m.id} className={m.is_active === false ? "opacity-50" : ""}>
                           <TableCell className="font-medium">{m.name}</TableCell>
                           <TableCell>
                             <Badge variant={m.role.toLowerCase() === "sdr" ? "default" : "secondary"} className={m.role.toLowerCase() === "sdr" ? "bg-primary text-primary-foreground" : "bg-accent text-accent-foreground"}>
@@ -203,18 +203,18 @@ export default function TeamPage() {
                           <TableCell className="hidden md:table-cell text-muted-foreground">{m.email || "—"}</TableCell>
                           <TableCell className="hidden md:table-cell text-muted-foreground">{m.phone || "—"}</TableCell>
                           <TableCell>
-                            {m.role.toLowerCase() === "sdr"
-                              ? `${m.monthly_lead_goal ?? 0} leads`
-                              : formatCurrency(m.monthly_revenue_goal ?? 0)}
+                            {m.role.toLowerCase() === "sdr" ?
+                        `${m.monthly_lead_goal ?? 0} leads` :
+                        formatCurrency(m.monthly_revenue_goal ?? 0)}
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
                               <span className={`inline-block h-2 w-2 rounded-full ${m.is_active !== false ? "bg-success" : "bg-muted-foreground/40"}`} />
                               <Switch
-                                checked={m.is_active !== false}
-                                onCheckedChange={(checked) => toggleMutation.mutate({ id: m.id, is_active: checked })}
-                                className="scale-75"
-                              />
+                            checked={m.is_active !== false}
+                            onCheckedChange={(checked) => toggleMutation.mutate({ id: m.id, is_active: checked })}
+                            className="scale-75" />
+
                             </div>
                           </TableCell>
                           <TableCell>
@@ -223,17 +223,17 @@ export default function TeamPage() {
                             </Button>
                           </TableCell>
                         </TableRow>
-                      ))}
+                    )}
                     </TableBody>
                   </Table>
                 </CardContent>
               </Card>
-            )}
+            }
           </TabsContent>
         </Tabs>
 
         {/* Add/Edit Modal */}
-        <Dialog open={open} onOpenChange={(v) => { if (!v) closeModal(); else setOpen(true); }}>
+        <Dialog open={open} onOpenChange={(v) => {if (!v) closeModal();else setOpen(true);}}>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle>{editingId ? "Editar Membro" : "Adicionar Membro"}</DialogTitle>
@@ -263,17 +263,17 @@ export default function TeamPage() {
                   <Input id="phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="(11) 99999-9999" />
                 </div>
               </div>
-              {form.role === "sdr" ? (
-                <div className="space-y-2">
+              {form.role === "sdr" ?
+              <div className="space-y-2">
                   <Label htmlFor="leadGoal">Meta mensal de leads</Label>
                   <Input id="leadGoal" type="number" min={0} value={form.monthly_lead_goal} onChange={(e) => setForm({ ...form, monthly_lead_goal: Number(e.target.value) || 0 })} />
-                </div>
-              ) : (
-                <div className="space-y-2">
+                </div> :
+
+              <div className="space-y-2">
                   <Label htmlFor="revenueGoal">Meta mensal de receita (R$)</Label>
                   <Input id="revenueGoal" value={formatCurrency(form.monthly_revenue_goal)} onChange={(e) => setForm({ ...form, monthly_revenue_goal: parseCurrencyInput(e.target.value) })} />
                 </div>
-              )}
+              }
               <div className="flex justify-end gap-2 pt-2">
                 <Button type="button" variant="outline" onClick={closeModal}>Cancelar</Button>
                 <Button type="submit" disabled={upsertMutation.isPending}>
@@ -285,6 +285,6 @@ export default function TeamPage() {
           </DialogContent>
         </Dialog>
       </div>
-    </DashboardLayout>
-  );
+    </DashboardLayout>);
+
 }
