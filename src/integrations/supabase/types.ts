@@ -111,6 +111,54 @@ export type Database = {
           },
         ]
       }
+      channel_monthly_data: {
+        Row: {
+          actual: number
+          channel_id: string
+          created_at: string
+          id: string
+          month: number
+          target: number
+          user_id: string
+          year: number
+        }
+        Insert: {
+          actual?: number
+          channel_id: string
+          created_at?: string
+          id?: string
+          month: number
+          target?: number
+          user_id: string
+          year: number
+        }
+        Update: {
+          actual?: number
+          channel_id?: string
+          created_at?: string
+          id?: string
+          month?: number
+          target?: number
+          user_id?: string
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "channel_monthly_data_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "sales_channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "channel_monthly_data_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       daily_seller_kpis: {
         Row: {
           created_at: string
@@ -502,6 +550,38 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      sales_channels: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_channels_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       team_members: {
         Row: {
