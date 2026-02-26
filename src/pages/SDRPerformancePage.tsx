@@ -52,7 +52,7 @@ export default function SDRPerformancePage() {
       const { data, error } = await supabase
         .from("team_members")
         .select("id, name, monthly_lead_goal")
-        .eq("role", "SDR")
+        .eq("role", "sdr")
         .eq("is_active", true)
         .order("name");
       if (error) throw error;

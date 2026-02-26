@@ -53,7 +53,7 @@ export default function CloserPerformancePage() {
       const { data, error } = await supabase
         .from("team_members")
         .select("id, name, monthly_revenue_goal")
-        .eq("role", "Closer")
+        .eq("role", "closer")
         .eq("is_active", true)
         .order("name");
       if (error) throw error;
