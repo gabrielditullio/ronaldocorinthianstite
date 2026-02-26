@@ -36,11 +36,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const fetchProfile = async (userId: string) => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("profiles")
       .select("*")
       .eq("id", userId)
       .single();
+    const profile = data as unknown as Profile | null;
+    console.log('[DEBUG AUTH] User ID:', userId);
+    console.log('[DEBUG AUTH] Profile query result:', profile);
+    console.log('[DEBUG AUTH] Profile query error:', error);
+    console.log('[DEBUG AUTH] Role value:', profile?.role);
+    console.log('[DEBUG AUTH] is_admin value:', profile?.is_admin);
+    console.log('[DEBUG AUTH] Type of role:', typeof profile?.role);
+    setProfile(profile);
     setProfile(data as unknown as Profile | null);
   };
 
