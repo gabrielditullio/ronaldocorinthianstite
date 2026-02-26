@@ -1,7 +1,7 @@
 import {
   LayoutDashboard, Stethoscope, Filter, UserCheck, Target,
   Calculator, ArrowDownUp, Handshake, BarChart3, Users,
-  Settings, ShieldCheck, LogOut, ChevronLeft
+  Settings, ShieldCheck, LogOut, ChevronLeft, Gauge
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
@@ -34,6 +34,7 @@ const navGroups = [
     label: "FERRAMENTAS",
     items: [
       { title: "Simulador de Metas", url: "/simulador-metas", icon: Calculator },
+      { title: "Tradutor de Métricas", url: "/benchmarks", icon: Gauge },
       { title: "Calculadora CAC", url: "/cac", icon: Calculator },
       { title: "Metas Reversas", url: "/goals", icon: ArrowDownUp },
       { title: "Reunião de Pipeline", url: "/meetings", icon: Handshake },
