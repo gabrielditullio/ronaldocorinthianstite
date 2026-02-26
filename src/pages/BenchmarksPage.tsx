@@ -46,15 +46,19 @@ export default function BenchmarksPage() {
     (async () => {
       const { data } = await supabase
         .from("monthly_snapshots")
-        .select("qualification_rate, close_rate")
+        .select("qualification_rate, close_rate, total_revenue, total_received")
         .eq("user_id", profile.id)
         .order("month_year", { ascending: false })
         .limit(1);
       if (data && data.length > 0) {
-        const snap = data[0];
+        const snap = data[0] as any;
+        const totalRev = snap.total_revenue ?? 0;
+        const totalRec = snap.total_received ?? 0;
+        const cashPct = totalRev > 0 ? (totalRec / totalRev) * 100 : 0;
         setValues((prev) => ({
           ...prev,
           close_rate: snap.close_rate?.toString() ?? "",
+          cash_collection: cashPct > 0 ? cashPct.toFixed(1) : "",
         }));
       }
     })();

@@ -1,7 +1,11 @@
-import { useMemo } from "react";
+import { useState, useMemo } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -53,6 +57,7 @@ type Snapshot = {
   avg_ticket: number | null;
   cac: number | null;
   ltv_cac_ratio: number | null;
+  total_received: number | null;
 };
 
 const METRIC_ROWS: {
@@ -71,6 +76,7 @@ const METRIC_ROWS: {
   { key: "avg_ticket", label: "Ticket Médio", format: formatBRL, higherIsBetter: true },
   { key: "cac", label: "CAC", format: formatBRL, higherIsBetter: false },
   { key: "ltv_cac_ratio", label: "LTV/CAC", format: (v) => v != null ? `${Number(v).toFixed(1)}x` : "—", higherIsBetter: true },
+  { key: "total_received", label: "Cash Collection", format: (v) => v != null ? formatBRL(v) : "—", higherIsBetter: true },
 ];
 
 function TrendIcon({ current, previous, higherIsBetter }: { current: number | null; previous: number | null; higherIsBetter: boolean }) {
@@ -98,7 +104,7 @@ export default function MonthlyPage() {
         .eq("user_id", user!.id)
         .order("month_year", { ascending: true });
       if (error) throw error;
-      return (data ?? []) as Snapshot[];
+      return (data ?? []).map((d: any) => ({ ...d, total_received: d.total_received ?? 0 })) as Snapshot[];
     },
   });
 
@@ -114,6 +120,18 @@ export default function MonthlyPage() {
       return data ?? [];
     },
   });
+
+  // Cash collection form fields for current month
+  const [totalBilled, setTotalBilled] = useState("");
+  const [totalReceived, setTotalReceived] = useState("");
+
+  // Pre-fill from current month snapshot
+  const currentSnap = snapshots.find((s) => s.month_year === currentMonth);
+  const cashRate = useMemo(() => {
+    const billed = parseFloat(totalBilled) || currentSnap?.total_revenue || 0;
+    const received = parseFloat(totalReceived) || currentSnap?.total_received || 0;
+    return billed > 0 ? (received / billed) * 100 : 0;
+  }, [totalBilled, totalReceived, currentSnap]);
 
   const generateMutation = useMutation({
     mutationFn: async () => {
@@ -153,6 +171,8 @@ export default function MonthlyPage() {
       const cac = cacData?.[0]?.cac ?? null;
       const ltvCac = cac && cac > 0 ? (avgTicket * 12) / cac : null;
 
+      const receivedVal = parseFloat(totalReceived) || 0;
+
       const row = {
         user_id: user.id,
         month_year: currentMonth,
@@ -166,6 +186,7 @@ export default function MonthlyPage() {
         avg_ticket: avgTicket,
         cac,
         ltv_cac_ratio: ltvCac,
+        total_received: receivedVal,
       };
 
       const existing = snapshots.find((s) => s.month_year === currentMonth);
@@ -229,6 +250,58 @@ export default function MonthlyPage() {
             {generateMutation.isPending ? "Gerando..." : "Gerar Snapshot do Mês"}
           </Button>
         </div>
+
+        {/* Cash Collection Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">💰 Cash Collection</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label>Total Faturado (R$)</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  placeholder="ex: 100000"
+                  value={totalBilled}
+                  onChange={(e) => setTotalBilled(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Total Recebido (R$)</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  placeholder="ex: 85000"
+                  value={totalReceived}
+                  onChange={(e) => setTotalReceived(e.target.value)}
+                />
+              </div>
+            </div>
+            {cashRate > 0 && (() => {
+              const level = cashRate <= 50 ? { label: "Péssimo", badgeCls: "bg-red-50 text-red-600 border-red-200", barCls: "bg-red-500" }
+                : cashRate <= 70 ? { label: "Ruim", badgeCls: "bg-orange-50 text-orange-600 border-orange-200", barCls: "bg-orange-500" }
+                : cashRate <= 85 ? { label: "Bom", badgeCls: "bg-blue-50 text-blue-600 border-blue-200", barCls: "bg-blue-500" }
+                : cashRate <= 95 ? { label: "Ótimo", badgeCls: "bg-emerald-50 text-emerald-600 border-emerald-200", barCls: "bg-emerald-500" }
+                : { label: "Excelente", badgeCls: "bg-green-50 text-green-600 border-green-200", barCls: "bg-green-500" };
+              const billed = parseFloat(totalBilled) || currentSnap?.total_revenue || 0;
+              const received = parseFloat(totalReceived) || currentSnap?.total_received || 0;
+              return (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-3">
+                    <span className="text-3xl font-bold text-foreground">{cashRate.toFixed(1)}%</span>
+                    <Badge variant="outline" className={`border ${level.badgeCls}`}>{level.label}</Badge>
+                  </div>
+                  <Progress value={Math.min(cashRate, 100)} className="h-2.5" />
+                  <p className="text-sm text-muted-foreground">
+                    {formatBRL(received)} de {formatBRL(billed)} recebidos
+                  </p>
+                </div>
+              );
+            })()}
+          </CardContent>
+        </Card>
 
         {last6.length < 2 ? (
           <Card>
