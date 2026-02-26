@@ -21,6 +21,7 @@ import GoalsPage from "./pages/GoalsPage";
 import MeetingsPage from "./pages/MeetingsPage";
 import MonthlyPage from "./pages/MonthlyPage";
 import AlignmentPage from "./pages/AlignmentPage";
+import GoalSimulatorPage from "./pages/GoalSimulatorPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -49,6 +50,7 @@ const App = () => (
             <Route path="/alignment" element={<ProtectedRoute><AlignmentPage /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute><AdminPage /></ProtectedRoute>} />
+            <Route path="/simulador-metas" element={<ProtectedRoute><GoalSimulatorPage /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
