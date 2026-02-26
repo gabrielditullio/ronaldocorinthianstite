@@ -297,6 +297,7 @@ export type Database = {
           month_year: string
           proposals_sent: number | null
           qualification_rate: number | null
+          total_received: number | null
           total_revenue: number | null
           user_id: string
         }
@@ -313,6 +314,7 @@ export type Database = {
           month_year: string
           proposals_sent?: number | null
           qualification_rate?: number | null
+          total_received?: number | null
           total_revenue?: number | null
           user_id: string
         }
@@ -329,6 +331,7 @@ export type Database = {
           month_year?: string
           proposals_sent?: number | null
           qualification_rate?: number | null
+          total_received?: number | null
           total_revenue?: number | null
           user_id?: string
         }
