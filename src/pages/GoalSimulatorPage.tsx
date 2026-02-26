@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -18,6 +19,20 @@ function fmtCurrency(n: number) {
   return n.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0, maximumFractionDigits: 0 });
 }
 
+function fmtPct(n: number) {
+  if (!isFinite(n) || isNaN(n)) return "—";
+  return n.toFixed(1).replace(".", ",") + "%";
+}
+
+function calcRevenue(at: number, cr: number, sr: number, scr: number, qr: number, totalLeads: number) {
+  if (at <= 0 || cr <= 0 || sr <= 0 || scr <= 0 || qr <= 0) return 0;
+  const qualified = totalLeads * (qr / 100);
+  const scheduled = qualified * (scr / 100);
+  const completed = scheduled * (sr / 100);
+  const sales = completed * (cr / 100);
+  return sales * at;
+}
+
 export default function GoalSimulatorPage() {
   const { profile } = useAuth();
   const [saving, setSaving] = useState(false);
@@ -30,6 +45,12 @@ export default function GoalSimulatorPage() {
   const [qualificationRate, setQualificationRate] = useState("");
   const [workingDays, setWorkingDays] = useState("22");
   const [numSellers, setNumSellers] = useState("1");
+
+  // Improvement sliders
+  const [impQualification, setImpQualification] = useState(0);
+  const [impScheduling, setImpScheduling] = useState(0);
+  const [impShow, setImpShow] = useState(0);
+  const [impConversion, setImpConversion] = useState(0);
 
   const toNum = (v: string) => parseFloat(v.replace(/\./g, "").replace(",", ".")) || 0;
 
@@ -55,6 +76,36 @@ export default function GoalSimulatorPage() {
   const meetingsPerSellerPerDay = ns > 0 ? meetingsPerDay / ns : 0;
 
   const canCalculate = tr > 0 && at > 0 && cr > 0 && sr > 0 && scr > 0 && qr > 0;
+
+  // Improvement simulation
+  const newQr = qr * (1 + impQualification / 100);
+  const newScr = scr * (1 + impScheduling / 100);
+  const newSr = sr * (1 + impShow / 100);
+  const newCr = cr * (1 + impConversion / 100);
+
+  const projectedRevenue = useMemo(() => {
+    if (!canCalculate) return 0;
+    return calcRevenue(at, newCr, newSr, newScr, newQr, totalLeads);
+  }, [canCalculate, at, newCr, newSr, newScr, newQr, totalLeads]);
+
+  const revenueDiff = projectedRevenue - tr;
+  const revenueDiffPct = tr > 0 ? (revenueDiff / tr) * 100 : 0;
+  const hasImprovement = impQualification > 0 || impScheduling > 0 || impShow > 0 || impConversion > 0;
+
+  // Find highest impact improvement
+  const impactInsight = useMemo(() => {
+    if (!canCalculate || !hasImprovement) return null;
+    const impacts = [
+      { name: "Taxa de Qualificação", imp: impQualification, from: qr, to: newQr, rev: calcRevenue(at, cr, sr, scr, qr * (1 + impQualification / 100), totalLeads) },
+      { name: "Taxa de Agendamento", imp: impScheduling, from: scr, to: newScr, rev: calcRevenue(at, cr, sr, scr * (1 + impScheduling / 100), qr, totalLeads) },
+      { name: "Taxa de Comparecimento", imp: impShow, from: sr, to: newSr, rev: calcRevenue(at, cr, sr * (1 + impShow / 100), scr, qr, totalLeads) },
+      { name: "Taxa de Conversão", imp: impConversion, from: cr, to: newCr, rev: calcRevenue(at, cr * (1 + impConversion / 100), sr, scr, qr, totalLeads) },
+    ].filter(i => i.imp > 0);
+    if (impacts.length === 0) return null;
+    const best = impacts.reduce((a, b) => (b.rev - tr) > (a.rev - tr) ? b : a);
+    const extraSales = at > 0 ? (best.rev - tr) / at : 0;
+    return `Ao melhorar sua ${best.name} em ${best.imp}% (de ${fmtPct(best.from)} para ${fmtPct(best.to)}), você conseguiria ${fmt(extraSales)} vendas adicionais e mais ${fmtCurrency(best.rev - tr)} em faturamento.`;
+  }, [canCalculate, hasImprovement, impQualification, impScheduling, impShow, impConversion, qr, scr, sr, cr, at, tr, totalLeads, newQr, newScr, newSr, newCr]);
 
   const handleSave = async () => {
     if (!profile?.id) return;
@@ -87,6 +138,15 @@ export default function GoalSimulatorPage() {
     { emoji: "✅", label: "Leads Qualificados", value: fmt(qualifiedLeads), sub: `${fmt(qualifiedLeads / (wd || 1))}/dia`, width: "52%" },
     { emoji: "👥", label: "Total de Leads", value: fmt(totalLeads), sub: `${fmt(leadsPerDay)}/dia`, width: "40%" },
   ];
+
+  const sliderRates = [
+    { label: "Taxa de Qualificação", original: qr, improved: newQr, value: impQualification, set: setImpQualification },
+    { label: "Taxa de Agendamento", original: scr, improved: newScr, value: impScheduling, set: setImpScheduling },
+    { label: "Taxa de Comparecimento", original: sr, improved: newSr, value: impShow, set: setImpShow },
+    { label: "Taxa de Conversão", original: cr, improved: newCr, value: impConversion, set: setImpConversion },
+  ];
+
+  const maxBar = Math.max(tr, projectedRevenue) || 1;
 
   return (
     <DashboardLayout>
@@ -148,9 +208,7 @@ export default function GoalSimulatorPage() {
           <div className="space-y-0 flex flex-col items-center">
             {funnelSteps.map((step, i) => (
               <div key={i} className="flex flex-col items-center" style={{ width: step.width, minWidth: 260 }}>
-                {i > 0 && (
-                  <div className="w-0.5 h-6 bg-primary/30" />
-                )}
+                {i > 0 && <div className="w-0.5 h-6 bg-primary/30" />}
                 <Card className={`w-full ${step.highlight ? "bg-primary text-primary-foreground border-primary" : ""}`}>
                   <CardContent className="py-4 px-5 text-center">
                     <p className={`text-xs font-medium uppercase tracking-wider ${step.highlight ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
@@ -177,6 +235,109 @@ export default function GoalSimulatorPage() {
             <Button onClick={handleSave} disabled={saving} size="lg" className="px-8">
               {saving ? "Salvando…" : "Salvar Simulação"}
             </Button>
+          </div>
+        )}
+
+        {/* ═══ Improvement Simulator ═══ */}
+        {canCalculate && (
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-xl font-bold text-foreground">📊 Simulador de Melhoria</h2>
+              <p className="text-muted-foreground mt-1">Veja o impacto de melhorar suas taxas no resultado final</p>
+            </div>
+
+            {/* Sliders */}
+            <Card>
+              <CardContent className="py-6 space-y-6">
+                {sliderRates.map((r) => (
+                  <div key={r.label} className="space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="font-medium text-foreground">{r.label}</span>
+                      <span className="text-muted-foreground">
+                        {fmtPct(r.original)} → <span className="font-semibold text-foreground">{fmtPct(r.improved)}</span>
+                        {r.value > 0 && <span className="ml-1 text-emerald-600">(+{r.value}%)</span>}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Slider
+                        min={0}
+                        max={50}
+                        step={5}
+                        value={[r.value]}
+                        onValueChange={([v]) => r.set(v)}
+                        className="flex-1"
+                      />
+                      <span className="text-sm font-medium w-14 text-right text-foreground">+{r.value}%</span>
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+
+            {/* Result highlight */}
+            {hasImprovement && (
+              <>
+                <Card className="border-emerald-200 bg-emerald-50/50">
+                  <CardContent className="py-6 text-center space-y-3">
+                    <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
+                      <div>
+                        <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Resultado Atual</p>
+                        <p className="text-2xl font-bold text-foreground">{fmtCurrency(tr)}</p>
+                      </div>
+                      <div className="text-2xl text-muted-foreground">→</div>
+                      <div>
+                        <p className="text-xs font-medium uppercase tracking-wider text-emerald-600">Resultado Projetado</p>
+                        <p className="text-4xl font-bold text-emerald-700">{fmtCurrency(projectedRevenue)}</p>
+                      </div>
+                    </div>
+                    <p className="text-lg font-semibold text-emerald-600">
+                      Variação: +{fmtCurrency(revenueDiff)} (+{revenueDiffPct.toFixed(1).replace(".", ",")}%)
+                    </p>
+                  </CardContent>
+                </Card>
+
+                {/* Dual bar chart */}
+                <Card>
+                  <CardContent className="py-6 space-y-4">
+                    <div className="space-y-3">
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Resultado Atual</span>
+                          <span className="font-medium text-foreground">{fmtCurrency(tr)}</span>
+                        </div>
+                        <div className="h-8 rounded-md bg-muted overflow-hidden">
+                          <div
+                            className="h-full rounded-md bg-muted-foreground/30 transition-all"
+                            style={{ width: `${(tr / maxBar) * 100}%` }}
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-emerald-600 font-medium">Resultado Projetado</span>
+                          <span className="font-bold text-emerald-700">{fmtCurrency(projectedRevenue)}</span>
+                        </div>
+                        <div className="h-8 rounded-md bg-emerald-50 overflow-hidden">
+                          <div
+                            className="h-full rounded-md bg-emerald-500 transition-all"
+                            style={{ width: `${(projectedRevenue / maxBar) * 100}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Insight */}
+                {impactInsight && (
+                  <Card className="border-primary/20">
+                    <CardContent className="py-5">
+                      <p className="text-sm text-foreground leading-relaxed">💡 {impactInsight}</p>
+                    </CardContent>
+                  </Card>
+                )}
+              </>
+            )}
           </div>
         )}
       </div>
