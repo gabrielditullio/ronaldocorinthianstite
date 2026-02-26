@@ -111,6 +111,63 @@ export type Database = {
           },
         ]
       }
+      daily_seller_kpis: {
+        Row: {
+          created_at: string
+          date: string
+          id: string
+          leads_generated: number
+          leads_qualified: number
+          meetings_completed: number
+          meetings_scheduled: number
+          revenue: number
+          sales: number
+          team_member_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          id?: string
+          leads_generated?: number
+          leads_qualified?: number
+          meetings_completed?: number
+          meetings_scheduled?: number
+          revenue?: number
+          sales?: number
+          team_member_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          id?: string
+          leads_generated?: number
+          leads_qualified?: number
+          meetings_completed?: number
+          meetings_scheduled?: number
+          revenue?: number
+          sales?: number
+          team_member_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_seller_kpis_team_member_id_fkey"
+            columns: ["team_member_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_seller_kpis_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       diagnostics: {
         Row: {
           created_at: string | null

@@ -27,6 +27,7 @@ const navGroups = [
     items: [
       { title: "Funil de Vendas", url: "/funnel", icon: Filter },
       { title: "Tráfego Pago", url: "/trafego-pago", icon: Megaphone },
+      { title: "KPIs por Vendedor", url: "/kpis-vendedores", icon: Users },
       { title: "Performance SDR", url: "/sdr-performance", icon: UserCheck },
       { title: "Performance Closer", url: "/closer-performance", icon: Target },
     ],

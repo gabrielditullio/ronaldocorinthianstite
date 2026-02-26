@@ -24,6 +24,7 @@ import AlignmentPage from "./pages/AlignmentPage";
 import GoalSimulatorPage from "./pages/GoalSimulatorPage";
 import BenchmarksPage from "./pages/BenchmarksPage";
 import PaidTrafficPage from "./pages/PaidTrafficPage";
+import SellerKPIsPage from "./pages/SellerKPIsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -55,6 +56,7 @@ const App = () => (
             <Route path="/simulador-metas" element={<ProtectedRoute><GoalSimulatorPage /></ProtectedRoute>} />
             <Route path="/benchmarks" element={<ProtectedRoute><BenchmarksPage /></ProtectedRoute>} />
             <Route path="/trafego-pago" element={<ProtectedRoute><PaidTrafficPage /></ProtectedRoute>} />
+            <Route path="/kpis-vendedores" element={<ProtectedRoute><SellerKPIsPage /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
