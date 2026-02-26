@@ -28,7 +28,7 @@ import SellerKPIsPage from "./pages/SellerKPIsPage";
 import ChannelsPage from "./pages/ChannelsPage";
 import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
 import AdminUsersPage from "./pages/admin/AdminUsersPage";
-import AdminPlaceholderPage from "./pages/admin/AdminPlaceholderPage";
+import AdminHealthPage from "./pages/admin/AdminHealthPage";
 import AdminWebhooksPage from "./pages/admin/AdminWebhooksPage";
 import AdminSettingsPage from "./pages/admin/AdminSettingsPage";
 import AdminExportPage from "./pages/admin/AdminExportPage";
@@ -73,7 +73,7 @@ const App = () => (
             <Route path="/admin/configuracoes" element={<AdminRouteGuard><AdminSettingsPage /></AdminRouteGuard>} />
             <Route path="/admin/exportar" element={<AdminRouteGuard><AdminExportPage /></AdminRouteGuard>} />
             <Route path="/admin/notificacoes" element={<AdminRouteGuard><AdminNotificationsPage /></AdminRouteGuard>} />
-            <Route path="/admin/saude" element={<AdminRouteGuard><AdminPlaceholderPage title="Saúde do Sistema" /></AdminRouteGuard>} />
+            <Route path="/admin/saude" element={<AdminRouteGuard><AdminHealthPage /></AdminRouteGuard>} />
 
             <Route path="*" element={<NotFound />} />
           </Routes>
