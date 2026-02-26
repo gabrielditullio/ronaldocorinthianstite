@@ -517,6 +517,7 @@ export type Database = {
           id: string
           is_admin: boolean | null
           phone: string | null
+          role: string
           subscription_activated_at: string | null
           subscription_status: string
           updated_at: string | null
@@ -531,6 +532,7 @@ export type Database = {
           id: string
           is_admin?: boolean | null
           phone?: string | null
+          role?: string
           subscription_activated_at?: string | null
           subscription_status?: string
           updated_at?: string | null
@@ -545,6 +547,7 @@ export type Database = {
           id?: string
           is_admin?: boolean | null
           phone?: string | null
+          role?: string
           subscription_activated_at?: string | null
           subscription_status?: string
           updated_at?: string | null
@@ -660,6 +663,7 @@ export type Database = {
     }
     Functions: {
       is_admin: { Args: never; Returns: boolean }
+      is_admin_role: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
