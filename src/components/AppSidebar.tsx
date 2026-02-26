@@ -111,7 +111,7 @@ export function AppSidebar() {
           </SidebarGroup>
         ))}
 
-        {profile?.is_admin && (
+        {(profile?.role === "admin" || profile?.is_admin) && (
           <SidebarGroup>
             <SidebarGroupLabel>ADMIN</SidebarGroupLabel>
             <SidebarGroupContent>
