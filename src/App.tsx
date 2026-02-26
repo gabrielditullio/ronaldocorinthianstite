@@ -9,6 +9,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import PlaceholderPage from "./pages/PlaceholderPage";
+import SettingsPage from "./pages/SettingsPage";
 import TeamPage from "./pages/TeamPage";
 import FunnelPage from "./pages/FunnelPage";
 import DiagnosticsPage from "./pages/DiagnosticsPage";
@@ -45,7 +46,7 @@ const App = () => (
             <Route path="/meetings" element={<ProtectedRoute><MeetingsPage /></ProtectedRoute>} />
             <Route path="/monthly" element={<ProtectedRoute><MonthlyPage /></ProtectedRoute>} />
             <Route path="/alignment" element={<ProtectedRoute><AlignmentPage /></ProtectedRoute>} />
-            <Route path="/settings" element={<ProtectedRoute><PlaceholderPage title="Configurações" /></ProtectedRoute>} />
+            <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute><PlaceholderPage title="Admin" /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -11,6 +11,8 @@ interface Profile {
   subscription_status: string;
   is_admin: boolean | null;
   has_order_bump: boolean | null;
+  subscription_activated_at: string | null;
+  hotmart_transaction_id: string | null;
 }
 
 interface AuthContextType {
