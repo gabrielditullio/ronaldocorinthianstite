@@ -282,7 +282,7 @@ export default function SettingsPage() {
                 {profile?.subscription_activated_at ? new Date(profile.subscription_activated_at).toLocaleDateString("pt-BR") : "—"}
               </div>
               <div>
-                <span className="text-muted-foreground">Transação Hotmart:</span>{" "}
+                <span className="text-muted-foreground">Transação Assiny:</span>{" "}
                 {profile?.hotmart_transaction_id || "—"}
               </div>
               <div>

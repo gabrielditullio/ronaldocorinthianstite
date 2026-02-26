@@ -7,7 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { toast } from "@/components/ui/sonner";
 import { ShieldAlert, RefreshCw, LogOut, Loader2, ExternalLink } from "lucide-react";
 
-const HOTMART_URL = "https://pay.hotmart.com/SEU_PRODUTO"; // Replace with actual URL
+const ASSINY_URL = "https://pay.hotmart.com/SEU_PRODUTO"; // Replace with actual Assiny URL
 const POLL_INTERVAL = 30;
 const MAX_DURATION = 300; // 5 minutes
 
@@ -129,7 +129,7 @@ export function Paywall() {
           <div className="border-t pt-4 space-y-3">
             <p className="text-xs text-muted-foreground">Ainda não comprou?</p>
             <Button asChild variant="link" className="text-primary">
-              <a href={HOTMART_URL} target="_blank" rel="noopener noreferrer">
+              <a href={ASSINY_URL} target="_blank" rel="noopener noreferrer">
                 Garantir meu acesso por R$ 67 <ExternalLink className="ml-1 h-3 w-3" />
               </a>
             </Button>
