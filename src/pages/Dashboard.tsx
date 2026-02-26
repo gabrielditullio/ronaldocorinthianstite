@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -7,6 +7,7 @@ import { DashboardKPIs } from "@/components/dashboard/DashboardKPIs";
 import { FunnelChart } from "@/components/dashboard/FunnelChart";
 import { RevenueChart } from "@/components/dashboard/RevenueChart";
 import { DashboardAlerts } from "@/components/dashboard/DashboardAlerts";
+import OnboardingWizard from "@/components/OnboardingWizard";
 import { Loader2 } from "lucide-react";
 
 function getGreeting(): string {
@@ -18,6 +19,9 @@ function getGreeting(): string {
 
 export default function Dashboard() {
   const { user, profile } = useAuth();
+  const [onboardingDismissed, setOnboardingDismissed] = useState(
+    () => localStorage.getItem("onboarding_complete") === "true"
+  );
 
   const { data: leads = [], isLoading: loadingLeads } = useQuery({
     queryKey: ["dashboard-leads"],
@@ -29,7 +33,7 @@ export default function Dashboard() {
     enabled: !!user,
   });
 
-  const { data: teamMembers = [] } = useQuery({
+  const { data: teamMembers = [], isLoading: loadingTeam } = useQuery({
     queryKey: ["dashboard-team"],
     queryFn: async () => {
       const { data, error } = await supabase.from("team_members").select("*").eq("is_active", true);
@@ -52,7 +56,19 @@ export default function Dashboard() {
     enabled: !!user,
   });
 
-  const loading = loadingLeads;
+  const loading = loadingLeads || loadingTeam;
+
+  // Show onboarding if active subscription, no data, and not dismissed
+  const showOnboarding =
+    !loading &&
+    !onboardingDismissed &&
+    profile?.subscription_status === "active" &&
+    leads.length === 0 &&
+    teamMembers.length === 0;
+
+  if (showOnboarding) {
+    return <OnboardingWizard onComplete={() => setOnboardingDismissed(true)} />;
+  }
 
   return (
     <DashboardLayout>
