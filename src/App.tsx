@@ -29,6 +29,7 @@ import ChannelsPage from "./pages/ChannelsPage";
 import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
 import AdminUsersPage from "./pages/admin/AdminUsersPage";
 import AdminPlaceholderPage from "./pages/admin/AdminPlaceholderPage";
+import AdminWebhooksPage from "./pages/admin/AdminWebhooksPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -65,7 +66,7 @@ const App = () => (
             {/* Admin routes */}
             <Route path="/admin" element={<AdminRouteGuard><AdminDashboardPage /></AdminRouteGuard>} />
             <Route path="/admin/usuarios" element={<AdminRouteGuard><AdminUsersPage /></AdminRouteGuard>} />
-            <Route path="/admin/webhooks" element={<AdminRouteGuard><AdminPlaceholderPage title="Webhooks" /></AdminRouteGuard>} />
+            <Route path="/admin/webhooks" element={<AdminRouteGuard><AdminWebhooksPage /></AdminRouteGuard>} />
             <Route path="/admin/configuracoes" element={<AdminRouteGuard><AdminPlaceholderPage title="Configurações" /></AdminRouteGuard>} />
             <Route path="/admin/exportar" element={<AdminRouteGuard><AdminPlaceholderPage title="Exportar Dados" /></AdminRouteGuard>} />
             <Route path="/admin/notificacoes" element={<AdminRouteGuard><AdminPlaceholderPage title="Notificações" /></AdminRouteGuard>} />
