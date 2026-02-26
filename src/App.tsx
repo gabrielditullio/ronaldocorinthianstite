@@ -15,6 +15,7 @@ import DiagnosticsPage from "./pages/DiagnosticsPage";
 import SDRPerformancePage from "./pages/SDRPerformancePage";
 import CloserPerformancePage from "./pages/CloserPerformancePage";
 import CACPage from "./pages/CACPage";
+import GoalsPage from "./pages/GoalsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -37,7 +38,7 @@ const App = () => (
             <Route path="/sdr-performance" element={<ProtectedRoute><SDRPerformancePage /></ProtectedRoute>} />
             <Route path="/closer-performance" element={<ProtectedRoute><CloserPerformancePage /></ProtectedRoute>} />
             <Route path="/cac" element={<ProtectedRoute><CACPage /></ProtectedRoute>} />
-            <Route path="/goals" element={<ProtectedRoute><PlaceholderPage title="Metas Reversas" /></ProtectedRoute>} />
+            <Route path="/goals" element={<ProtectedRoute><GoalsPage /></ProtectedRoute>} />
             <Route path="/meetings" element={<ProtectedRoute><PlaceholderPage title="Reunião de Pipeline" /></ProtectedRoute>} />
             <Route path="/monthly" element={<ProtectedRoute><PlaceholderPage title="Comparativo Mensal" /></ProtectedRoute>} />
             <Route path="/alignment" element={<ProtectedRoute><PlaceholderPage title="Alinhamento SDR-Closer" /></ProtectedRoute>} />
