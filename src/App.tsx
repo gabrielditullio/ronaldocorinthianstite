@@ -14,6 +14,7 @@ import FunnelPage from "./pages/FunnelPage";
 import DiagnosticsPage from "./pages/DiagnosticsPage";
 import SDRPerformancePage from "./pages/SDRPerformancePage";
 import CloserPerformancePage from "./pages/CloserPerformancePage";
+import CACPage from "./pages/CACPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -35,7 +36,7 @@ const App = () => (
             <Route path="/diagnostics" element={<ProtectedRoute><DiagnosticsPage /></ProtectedRoute>} />
             <Route path="/sdr-performance" element={<ProtectedRoute><SDRPerformancePage /></ProtectedRoute>} />
             <Route path="/closer-performance" element={<ProtectedRoute><CloserPerformancePage /></ProtectedRoute>} />
-            <Route path="/cac" element={<ProtectedRoute><PlaceholderPage title="Calculadora CAC" /></ProtectedRoute>} />
+            <Route path="/cac" element={<ProtectedRoute><CACPage /></ProtectedRoute>} />
             <Route path="/goals" element={<ProtectedRoute><PlaceholderPage title="Metas Reversas" /></ProtectedRoute>} />
             <Route path="/meetings" element={<ProtectedRoute><PlaceholderPage title="Reunião de Pipeline" /></ProtectedRoute>} />
             <Route path="/monthly" element={<ProtectedRoute><PlaceholderPage title="Comparativo Mensal" /></ProtectedRoute>} />
