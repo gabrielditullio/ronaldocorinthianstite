@@ -38,6 +38,7 @@ const navGroups = [
     label: "FERRAMENTAS",
     items: [
       { title: "Simulador de Metas", url: "/simulador-metas", icon: Calculator },
+      { title: "Sessão Estratégica", url: "/sessao-estrategica", icon: Target },
       { title: "Tradutor de Métricas", url: "/benchmarks", icon: Gauge },
       { title: "Calculadora CAC", url: "/cac", icon: Calculator },
       { title: "Metas Reversas", url: "/goals", icon: ArrowDownUp },

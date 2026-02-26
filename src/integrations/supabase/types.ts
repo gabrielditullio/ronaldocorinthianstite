@@ -744,30 +744,63 @@ export type Database = {
       session_metrics: {
         Row: {
           action_items: string | null
+          attendance_rate: number | null
+          avg_ticket: number | null
+          confirmation_rate: number | null
           created_at: string
+          form_completion_rate: number | null
           id: string
           key_decisions: string | null
+          month: number | null
+          noshow_confirmed: number | null
+          noshow_unconfirmed: number | null
           notes: string | null
+          recorded_calls_rate: number | null
+          reschedule_rate: number | null
+          scheduling_rate: number | null
           session_date: string
           user_id: string
+          year: number | null
         }
         Insert: {
           action_items?: string | null
+          attendance_rate?: number | null
+          avg_ticket?: number | null
+          confirmation_rate?: number | null
           created_at?: string
+          form_completion_rate?: number | null
           id?: string
           key_decisions?: string | null
+          month?: number | null
+          noshow_confirmed?: number | null
+          noshow_unconfirmed?: number | null
           notes?: string | null
+          recorded_calls_rate?: number | null
+          reschedule_rate?: number | null
+          scheduling_rate?: number | null
           session_date?: string
           user_id: string
+          year?: number | null
         }
         Update: {
           action_items?: string | null
+          attendance_rate?: number | null
+          avg_ticket?: number | null
+          confirmation_rate?: number | null
           created_at?: string
+          form_completion_rate?: number | null
           id?: string
           key_decisions?: string | null
+          month?: number | null
+          noshow_confirmed?: number | null
+          noshow_unconfirmed?: number | null
           notes?: string | null
+          recorded_calls_rate?: number | null
+          reschedule_rate?: number | null
+          scheduling_rate?: number | null
           session_date?: string
           user_id?: string
+          year?: number | null
         }
         Relationships: []
       }
