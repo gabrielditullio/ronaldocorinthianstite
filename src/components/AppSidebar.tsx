@@ -64,14 +64,14 @@ export function AppSidebar() {
         {!collapsed && (
           <div className="flex items-center gap-2">
             <div>
-              <span className="text-xl font-extrabold text-primary">RAIO-X</span>
+              <span className="text-xl font-extrabold text-sidebar-foreground">RAIO-X</span>
               <br />
-              <span className="text-sm font-bold text-accent">COMERCIAL</span>
+              <span className="text-sm font-bold text-sidebar-foreground/70">COMERCIAL</span>
             </div>
           </div>
         )}
         {collapsed && (
-          <span className="text-lg font-extrabold text-primary">RX</span>
+          <span className="text-lg font-extrabold text-sidebar-foreground">RX</span>
         )}
       </SidebarHeader>
 
@@ -131,7 +131,7 @@ export function AppSidebar() {
         <Separator className="mb-3" />
         <div className="flex items-center gap-3">
           <Avatar className="h-8 w-8 shrink-0">
-            <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+            <AvatarFallback className="bg-sidebar-accent text-sidebar-accent-foreground text-xs">
               {initials}
             </AvatarFallback>
           </Avatar>
