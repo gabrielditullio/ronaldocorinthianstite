@@ -10,6 +10,7 @@ import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import PlaceholderPage from "./pages/PlaceholderPage";
 import TeamPage from "./pages/TeamPage";
+import FunnelPage from "./pages/FunnelPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,7 +27,7 @@ const App = () => (
             <Route path="/register" element={<Register />} />
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-            <Route path="/funnel" element={<ProtectedRoute><PlaceholderPage title="Funil de Vendas" /></ProtectedRoute>} />
+            <Route path="/funnel" element={<ProtectedRoute><FunnelPage /></ProtectedRoute>} />
             <Route path="/team" element={<ProtectedRoute><TeamPage /></ProtectedRoute>} />
             <Route path="/diagnostics" element={<ProtectedRoute><PlaceholderPage title="Diagnóstico Rápido" /></ProtectedRoute>} />
             <Route path="/sdr-performance" element={<ProtectedRoute><PlaceholderPage title="Performance SDR" /></ProtectedRoute>} />
