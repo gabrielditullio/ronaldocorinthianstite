@@ -361,6 +361,45 @@ export default function AdminHealthPage() {
               </div>
             </CardContent>
           </Card>
+
+          {/* 7. Security Checklist */}
+          <Card className="md:col-span-2">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                🔒 Checklist de Segurança
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-green-50 text-green-800">
+                  <CheckCircle className="h-5 w-5 shrink-0" />
+                  <span className="font-medium">RLS ativado em todas as tabelas</span>
+                </div>
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-green-50 text-green-800">
+                  <CheckCircle className="h-5 w-5 shrink-0" />
+                  <span className="font-medium">Verificação auth.uid() IS NOT NULL em todas as políticas</span>
+                </div>
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-green-50 text-green-800">
+                  <CheckCircle className="h-5 w-5 shrink-0" />
+                  <span className="font-medium">search_path definido em todas as funções</span>
+                </div>
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-yellow-50 text-yellow-800">
+                  <AlertTriangle className="h-5 w-5 shrink-0" />
+                  <span className="font-medium">
+                    Proteção contra senhas vazadas: Verificar em{" "}
+                    <a
+                      href="https://supabase.com/dashboard/project/lsvkgowogmisayzwnnji/auth/settings"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline"
+                    >
+                      Supabase Dashboard → Auth → Settings
+                    </a>
+                  </span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </AdminLayout>
