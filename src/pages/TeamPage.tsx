@@ -39,7 +39,7 @@ interface FormData {
 
 const defaultForm: FormData = {
   name: "",
-  role: "SDR",
+  role: "sdr",
   email: "",
   phone: "",
   monthly_lead_goal: 25,
@@ -121,7 +121,7 @@ export default function TeamPage() {
   const openEdit = (m: TeamMember) => {
     setForm({
       name: m.name,
-      role: m.role,
+      role: m.role.toLowerCase(),
       email: m.email || "",
       phone: m.phone || "",
       monthly_lead_goal: m.monthly_lead_goal ?? 25,
@@ -137,7 +137,7 @@ export default function TeamPage() {
     upsertMutation.mutate({ ...form, id: editingId ?? undefined });
   };
 
-  const filtered = tab === "all" ? members : members.filter((m) => m.role === tab);
+  const filtered = tab === "all" ? members : members.filter((m) => m.role.toLowerCase() === tab);
 
   return (
     <DashboardLayout>
@@ -155,8 +155,8 @@ export default function TeamPage() {
         <Tabs value={tab} onValueChange={setTab}>
           <TabsList>
             <TabsTrigger value="all">Todos ({members.length})</TabsTrigger>
-            <TabsTrigger value="SDR">SDRs ({members.filter((m) => m.role === "SDR").length})</TabsTrigger>
-            <TabsTrigger value="Closer">Closers ({members.filter((m) => m.role === "Closer").length})</TabsTrigger>
+            <TabsTrigger value="sdr">SDRs ({members.filter((m) => m.role.toLowerCase() === "sdr").length})</TabsTrigger>
+            <TabsTrigger value="closer">Closers ({members.filter((m) => m.role.toLowerCase() === "closer").length})</TabsTrigger>
           </TabsList>
 
           <TabsContent value={tab} className="mt-4">
@@ -196,14 +196,14 @@ export default function TeamPage() {
                         <TableRow key={m.id} className={m.is_active === false ? "opacity-50" : ""}>
                           <TableCell className="font-medium">{m.name}</TableCell>
                           <TableCell>
-                            <Badge variant={m.role === "SDR" ? "default" : "secondary"} className={m.role === "SDR" ? "bg-primary text-primary-foreground" : "bg-accent text-accent-foreground"}>
-                              {m.role}
+                            <Badge variant={m.role.toLowerCase() === "sdr" ? "default" : "secondary"} className={m.role.toLowerCase() === "sdr" ? "bg-primary text-primary-foreground" : "bg-accent text-accent-foreground"}>
+                              {m.role.toUpperCase() === "SDR" ? "SDR" : "Closer"}
                             </Badge>
                           </TableCell>
                           <TableCell className="hidden md:table-cell text-muted-foreground">{m.email || "—"}</TableCell>
                           <TableCell className="hidden md:table-cell text-muted-foreground">{m.phone || "—"}</TableCell>
                           <TableCell>
-                            {m.role === "SDR"
+                            {m.role.toLowerCase() === "sdr"
                               ? `${m.monthly_lead_goal ?? 0} leads`
                               : formatCurrency(m.monthly_revenue_goal ?? 0)}
                           </TableCell>
@@ -248,8 +248,8 @@ export default function TeamPage() {
                 <Select value={form.role} onValueChange={(v) => setForm({ ...form, role: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="SDR">SDR</SelectItem>
-                    <SelectItem value="Closer">Closer</SelectItem>
+                    <SelectItem value="sdr">SDR</SelectItem>
+                    <SelectItem value="closer">Closer</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -263,7 +263,7 @@ export default function TeamPage() {
                   <Input id="phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="(11) 99999-9999" />
                 </div>
               </div>
-              {form.role === "SDR" ? (
+              {form.role === "sdr" ? (
                 <div className="space-y-2">
                   <Label htmlFor="leadGoal">Meta mensal de leads</Label>
                   <Input id="leadGoal" type="number" min={0} value={form.monthly_lead_goal} onChange={(e) => setForm({ ...form, monthly_lead_goal: Number(e.target.value) || 0 })} />
