@@ -62,6 +62,10 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
 
+  console.log('[DEBUG SIDEBAR] profile:', profile);
+  console.log('[DEBUG SIDEBAR] role check:', profile?.role === 'admin');
+  console.log('[DEBUG SIDEBAR] is_admin check:', profile?.is_admin);
+
   const initials = profile?.full_name
     ? profile.full_name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()
     : "?";
