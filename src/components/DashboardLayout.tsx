@@ -26,9 +26,9 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
         <AppSidebar />
         <SidebarInset>
           <header className="flex h-14 items-center gap-2 border-b px-4">
-            <SidebarTrigger />
+            <SidebarTrigger aria-label="Abrir menu" />
           </header>
-          <main className="flex-1 p-6">{children}</main>
+          <main className="flex-1 p-4 sm:p-6 animate-fade-in">{children}</main>
         </SidebarInset>
       </div>
     </SidebarProvider>

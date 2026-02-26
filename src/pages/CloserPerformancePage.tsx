@@ -152,7 +152,9 @@ export default function CloserPerformancePage() {
         </div>
 
         {loading ? (
-          <div className="flex justify-center py-16"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
+          <div className="space-y-4 animate-fade-in">
+            {[1,2,3].map(i => <div key={i} className="h-20 rounded-lg bg-muted animate-pulse" />)}
+          </div>
         ) : closers.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center py-16 text-center">
