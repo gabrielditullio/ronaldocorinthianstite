@@ -34,6 +34,7 @@ import AdminWebhooksPage from "./pages/admin/AdminWebhooksPage";
 import AdminSettingsPage from "./pages/admin/AdminSettingsPage";
 import AdminExportPage from "./pages/admin/AdminExportPage";
 import AdminNotificationsPage from "./pages/admin/AdminNotificationsPage";
+import AdminDemoDataPage from "./pages/admin/AdminDemoDataPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -76,6 +77,7 @@ const App = () => (
             <Route path="/admin/exportar" element={<AdminRouteGuard><AdminExportPage /></AdminRouteGuard>} />
             <Route path="/admin/notificacoes" element={<AdminRouteGuard><AdminNotificationsPage /></AdminRouteGuard>} />
             <Route path="/admin/saude" element={<AdminRouteGuard><AdminHealthPage /></AdminRouteGuard>} />
+            <Route path="/admin/demo-data" element={<AdminRouteGuard><AdminDemoDataPage /></AdminRouteGuard>} />
 
             <Route path="*" element={<NotFound />} />
           </Routes>

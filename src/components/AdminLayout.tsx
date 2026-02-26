@@ -14,6 +14,7 @@ const menuItems = [
   { label: "📤 Exportar Dados", path: "/admin/exportar", icon: Download },
   { label: "🔔 Notificações", path: "/admin/notificacoes", icon: Bell },
   { label: "💚 Saúde do Sistema", path: "/admin/saude", icon: HeartPulse },
+  { label: "🧪 Dados Demo", path: "/admin/demo-data", icon: BarChart3 },
 ];
 
 export function AdminLayout({ children }: { children: ReactNode }) {

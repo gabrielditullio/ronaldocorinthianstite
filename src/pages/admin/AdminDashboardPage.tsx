@@ -1,12 +1,14 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminLayout } from "@/components/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, UserCheck, UserX, DollarSign, TrendingDown } from "lucide-react";
+import { Users, UserCheck, UserX, DollarSign, TrendingDown, FlaskConical } from "lucide-react";
 import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
 } from "recharts";
+import { DEMO_CLOSER_NAMES, DEMO_SDR_NAMES } from "@/lib/demo-seed";
 
 const STATUS_COLORS: Record<string, string> = {
   active: "#16a34a",
@@ -25,6 +27,19 @@ export default function AdminDashboardPage() {
       return data;
     },
   });
+
+  const { data: teamMembers = [] } = useQuery({
+    queryKey: ["admin-demo-check"],
+    queryFn: async () => {
+      const { data } = await supabase.from("team_members").select("name").limit(20);
+      return data || [];
+    },
+  });
+
+  const hasDemoData = useMemo(() => {
+    const demoNames = [...DEMO_CLOSER_NAMES, ...DEMO_SDR_NAMES];
+    return teamMembers.some(m => demoNames.includes(m.name));
+  }, [teamMembers]);
 
   const stats = useMemo(() => {
     const now = new Date();
@@ -90,6 +105,14 @@ export default function AdminDashboardPage() {
     <AdminLayout>
       <div className="space-y-6">
         <h1 className="text-2xl font-bold text-foreground">Dashboard Admin</h1>
+
+        {hasDemoData && (
+          <div className="flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-sm text-amber-800">
+            <FlaskConical className="h-4 w-4" />
+            🧪 Dados de demonstração ativos —{" "}
+            <Link to="/admin/demo-data" className="underline font-medium hover:text-amber-900">Limpar dados demo</Link>
+          </div>
+        )}
 
         {isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 animate-fade-in">
