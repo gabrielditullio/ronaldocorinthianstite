@@ -1,7 +1,7 @@
 import {
   LayoutDashboard, Stethoscope, Filter, UserCheck, Target,
   Calculator, ArrowDownUp, Handshake, BarChart3, Users,
-  Settings, ShieldCheck, LogOut, ChevronLeft, Gauge, Megaphone
+  Settings, ShieldCheck, LogOut, ChevronLeft, Gauge, Megaphone, Radio
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
@@ -47,6 +47,7 @@ const navGroups = [
   {
     label: "CONFIGURAR",
     items: [
+      { title: "Canais de Venda", url: "/canais", icon: Radio },
       { title: "Meu Time", url: "/team", icon: Users },
       { title: "Configurações", url: "/settings", icon: Settings },
     ],

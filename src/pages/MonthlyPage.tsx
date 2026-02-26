@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
-import { ArrowUp, ArrowDown, Minus, Camera, TrendingUp } from "lucide-react";
+import { ArrowUp, ArrowDown, Minus, Camera, TrendingUp, Save } from "lucide-react";
 import {
   ChartContainer,
   ChartTooltip,
@@ -24,6 +24,10 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip,
 } from "recharts";
 import {
   Table,
@@ -32,6 +36,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  TableFooter,
 } from "@/components/ui/table";
 
 function formatBRL(v: number | null): string {
@@ -93,6 +98,8 @@ export default function MonthlyPage() {
   const { user } = useAuth();
   const qc = useQueryClient();
   const currentMonth = new Date().toISOString().slice(0, 7);
+  const currentMonthNum = new Date().getMonth() + 1;
+  const currentYear = new Date().getFullYear();
 
   const { data: snapshots = [] } = useQuery({
     queryKey: ["monthly_snapshots", user?.id],
@@ -414,9 +421,139 @@ export default function MonthlyPage() {
                 </CardContent>
               </Card>
             </div>
+
+            {/* Channel Revenue Section */}
+            <ChannelRevenueSection userId={user?.id} month={currentMonthNum} year={currentYear} />
           </>
         )}
       </div>
     </DashboardLayout>
+  );
+}
+
+const DONUT_COLORS = [
+  "hsl(340, 50%, 35%)", "hsl(213, 85%, 31%)", "hsl(36, 90%, 51%)",
+  "hsl(145, 55%, 40%)", "hsl(195, 60%, 45%)", "hsl(280, 50%, 45%)", "hsl(15, 70%, 50%)",
+];
+
+function ChannelRevenueSection({ userId, month, year }: { userId?: string; month: number; year: number }) {
+  const [channels, setChannels] = useState<{ id: string; name: string }[]>([]);
+  const [channelData, setChannelData] = useState<Record<string, { target: number; actual: number }>>({});
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!userId) return;
+    supabase.from("sales_channels").select("id, name").eq("user_id", userId).eq("is_active", true).order("created_at")
+      .then(({ data }) => { if (data) setChannels(data); });
+  }, [userId]);
+
+  useEffect(() => {
+    if (!userId || channels.length === 0) return;
+    supabase.from("channel_monthly_data").select("*").eq("user_id", userId).eq("month", month).eq("year", year)
+      .then(({ data }) => {
+        const map: Record<string, { target: number; actual: number }> = {};
+        channels.forEach(ch => { map[ch.id] = { target: 0, actual: 0 }; });
+        data?.forEach((r: any) => { map[r.channel_id] = { target: Number(r.target) || 0, actual: Number(r.actual) || 0 }; });
+        setChannelData(map);
+      });
+  }, [userId, channels, month, year]);
+
+  const updateField = (chId: string, field: "target" | "actual", val: number) => {
+    setChannelData(prev => ({ ...prev, [chId]: { ...prev[chId], [field]: val } }));
+  };
+
+  const handleSave = async () => {
+    if (!userId) return;
+    setSaving(true);
+    const records = channels.map(ch => ({
+      user_id: userId,
+      channel_id: ch.id,
+      month,
+      year,
+      target: channelData[ch.id]?.target || 0,
+      actual: channelData[ch.id]?.actual || 0,
+    }));
+    const { error } = await supabase.from("channel_monthly_data").upsert(records, { onConflict: "channel_id,month,year" });
+    if (error) toast({ title: "Erro", description: error.message, variant: "destructive" });
+    else toast({ title: "Dados de canais salvos!" });
+    setSaving(false);
+  };
+
+  const totalTarget = Object.values(channelData).reduce((s, v) => s + v.target, 0);
+  const totalActual = Object.values(channelData).reduce((s, v) => s + v.actual, 0);
+
+  const donutData = channels.map(ch => ({ name: ch.name, value: channelData[ch.id]?.actual || 0 })).filter(d => d.value > 0);
+
+  if (channels.length === 0) return null;
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <Card className="lg:col-span-2">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="text-lg">Faturamento por Canal</CardTitle>
+          <Button size="sm" onClick={handleSave} disabled={saving} className="bg-[#5B2333] hover:bg-[#5B2333]/90 text-white">
+            <Save className="h-4 w-4 mr-1" /> {saving ? "Salvando..." : "Salvar"}
+          </Button>
+        </CardHeader>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-[#5B2333] hover:bg-[#5B2333]">
+                <TableHead className="text-white font-semibold">Canal</TableHead>
+                <TableHead className="text-white font-semibold text-center">Meta (R$)</TableHead>
+                <TableHead className="text-white font-semibold text-center">Realizado (R$)</TableHead>
+                <TableHead className="text-white font-semibold text-center">% Atingimento</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {channels.map((ch, i) => {
+                const d = channelData[ch.id] || { target: 0, actual: 0 };
+                const pctVal = d.target > 0 ? (d.actual / d.target) * 100 : 0;
+                const badgeCls = pctVal < 60 ? "bg-red-50 text-red-600 border-red-200"
+                  : pctVal < 90 ? "bg-orange-50 text-orange-600 border-orange-200"
+                  : "bg-green-50 text-green-600 border-green-200";
+                return (
+                  <TableRow key={ch.id} className={i % 2 === 0 ? "bg-[#FAF6F0]" : "bg-white"}>
+                    <TableCell className="font-medium">{ch.name}</TableCell>
+                    <TableCell className="p-1"><Input type="number" min={0} className="h-8 text-center text-sm" value={d.target || ""} onChange={e => updateField(ch.id, "target", Number(e.target.value) || 0)} /></TableCell>
+                    <TableCell className="p-1"><Input type="number" min={0} className="h-8 text-center text-sm" value={d.actual || ""} onChange={e => updateField(ch.id, "actual", Number(e.target.value) || 0)} /></TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Progress value={Math.min(pctVal, 100)} className="h-2 flex-1" />
+                        <Badge variant="outline" className={`text-xs border ${badgeCls}`}>{pctVal.toFixed(0)}%</Badge>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+            <TableFooter>
+              <TableRow className="bg-muted font-bold">
+                <TableCell>TOTAL</TableCell>
+                <TableCell className="text-center">R$ {totalTarget.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
+                <TableCell className="text-center">R$ {totalActual.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
+                <TableCell className="text-center">{totalTarget > 0 ? ((totalActual / totalTarget) * 100).toFixed(0) : 0}%</TableCell>
+              </TableRow>
+            </TableFooter>
+          </Table>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader><CardTitle className="text-lg">Receita por Canal</CardTitle></CardHeader>
+        <CardContent className="flex justify-center">
+          {donutData.length > 0 ? (
+            <PieChart width={250} height={250}>
+              <Pie data={donutData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={55} outerRadius={95} paddingAngle={3}>
+                {donutData.map((_, idx) => <Cell key={idx} fill={DONUT_COLORS[idx % DONUT_COLORS.length]} />)}
+              </Pie>
+              <Tooltip formatter={(v: number) => `R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`} />
+            </PieChart>
+          ) : (
+            <p className="text-muted-foreground text-sm py-12">Preencha os valores realizados para ver o gráfico.</p>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 }
