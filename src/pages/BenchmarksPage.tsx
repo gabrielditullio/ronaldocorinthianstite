@@ -9,7 +9,8 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { ChevronDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { GUIDES, classifyValue, levelToScore, scoreToPercent, type GuideKey } from "@/data/benchmarks";
+import { useQuery } from "@tanstack/react-query";
+import { GUIDES, classifyValue, levelToScore, scoreToPercent, type GuideKey, type BenchmarkMetric } from "@/data/benchmarks";
 import { MoMIndicator } from "@/components/MoMIndicator";
 
 const badgeStyles: Record<string, string> = {
@@ -79,7 +80,37 @@ export default function BenchmarksPage() {
     })();
   }, [profile?.id]);
 
-  const metrics = GUIDES[guide].metrics;
+  // Fetch DB benchmark configs
+  const { data: dbConfigs = [] } = useQuery({
+    queryKey: ["benchmark-configs-user"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("benchmark_configs").select("*");
+      if (error) return [];
+      return data || [];
+    },
+  });
+
+  // Merge DB configs over hardcoded defaults
+  const metrics = useMemo(() => {
+    const base = GUIDES[guide].metrics;
+    if (dbConfigs.length === 0) return base;
+
+    return base.map((m): BenchmarkMetric => ({
+      ...m,
+      levels: m.levels.map((l) => {
+        const db = dbConfigs.find(
+          (c: any) => c.funnel_type === guide && c.metric_key === m.key && c.level === l.key
+        );
+        if (!db) return l;
+        return {
+          ...l,
+          min: db.min_value != null ? Number(db.min_value) : l.min,
+          max: db.max_value != null ? Number(db.max_value) : l.max,
+          coaching: (db as any).coaching_text || l.coaching,
+        };
+      }),
+    }));
+  }, [guide, dbConfigs]);
 
   const results = useMemo(() => {
     return metrics.map((m) => {
