@@ -1,5 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
+import { Link } from "react-router-dom";
 import { DashboardLayout } from "@/components/DashboardLayout";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -231,6 +233,22 @@ export default function BenchmarksPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Empty state when no values entered */}
+        {results.every(r => r.val === null) && (
+          <Card className="animate-fade-in">
+            <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+              <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-primary/5">
+                <ChevronDown className="h-10 w-10 text-primary/60" strokeWidth={1.5} />
+              </div>
+              <h3 className="text-lg font-semibold text-foreground">Complete seu primeiro diagnóstico</h3>
+              <p className="mt-1 max-w-sm text-sm text-muted-foreground">Preencha as métricas acima para receber classificação e coaching personalizado.</p>
+              <Button asChild className="mt-5 bg-primary hover:bg-primary/90">
+                <Link to="/diagnostics">Fazer Diagnóstico</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Metric result cards */}
         <div className="space-y-4">

@@ -292,10 +292,10 @@ export default function PipelinePage() {
         ) : leads.length === 0 ? (
           <EmptyState
             icon={GripVertical}
-            title="Nenhum lead cadastrado"
-            description="Clique em 'Novo Lead' para começar a preencher seu pipeline."
-            actionLabel="Novo Lead"
-            actionTo="/pipeline"
+            title="Nenhum lead este mês"
+            description="Adicione leads para visualizar seu pipeline de vendas."
+            actionLabel="Adicionar Lead"
+            onAction={openNew}
           />
         ) : (
           <>

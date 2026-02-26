@@ -153,7 +153,7 @@ export default function CloserPerformancePage() {
 
         {loading ? (
           <div className="space-y-4 animate-fade-in">
-            {[1,2,3].map(i => <div key={i} className="h-20 rounded-lg bg-muted animate-pulse" />)}
+            {[1,2,3].map(i => <div key={i} className="h-20 rounded-lg bg-[#E8E0D8] animate-pulse" />)}
           </div>
         ) : closers.length === 0 ? (
           <Card>

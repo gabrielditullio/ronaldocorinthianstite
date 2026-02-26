@@ -10,7 +10,7 @@ import { RevenueChart } from "@/components/dashboard/RevenueChart";
 import { DashboardAlerts } from "@/components/dashboard/DashboardAlerts";
 import OnboardingWizard from "@/components/OnboardingWizard";
 import { PageSkeleton, EmptyState } from "@/components/ui/page-states";
-import { Filter } from "lucide-react";
+import { Camera } from "lucide-react";
 
 function getGreeting(): string {
   const h = new Date().getHours();
@@ -92,11 +92,11 @@ export default function Dashboard() {
           <PageSkeleton />
         ) : leads.length === 0 ? (
           <EmptyState
-            icon={Filter}
-            title="Seu painel está esperando por dados"
-            description="Adicione leads no Funil de Vendas para começar a ver suas métricas e gráficos."
-            actionLabel="Ir para o Funil"
-            actionTo="/funnel"
+            icon={Camera}
+            title="Comece inserindo os dados do seu primeiro mês"
+            description="Gere um snapshot mensal para visualizar métricas e gráficos no painel."
+            actionLabel="Criar Snapshot"
+            actionTo="/monthly"
           />
         ) : (
           <>
