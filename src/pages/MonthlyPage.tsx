@@ -326,7 +326,7 @@ export default function MonthlyPage() {
               <CardHeader>
                 <CardTitle className="text-lg">Métricas por Mês</CardTitle>
               </CardHeader>
-              <CardContent className="overflow-x-auto">
+              <CardContent className="overflow-x-auto p-0 sm:p-6">
                 <Table>
                   <TableHeader>
                     <TableRow>

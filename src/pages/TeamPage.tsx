@@ -178,8 +178,8 @@ export default function TeamPage() {
               </Card>
             ) : (
               <Card>
-                <CardContent className="p-0">
-                  <Table>
+                <CardContent className="p-0 overflow-x-auto">
+                   <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead>Nome</TableHead>

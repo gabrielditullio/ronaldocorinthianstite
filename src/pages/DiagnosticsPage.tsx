@@ -220,7 +220,7 @@ export default function DiagnosticsPage() {
 
         {/* Submit */}
         <Button
-          className="w-full"
+          className="w-full sm:w-auto"
           size="lg"
           disabled={!allAnswered || saveMutation.isPending}
           onClick={() => saveMutation.mutate()}
