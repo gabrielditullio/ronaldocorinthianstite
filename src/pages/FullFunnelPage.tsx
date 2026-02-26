@@ -214,10 +214,10 @@ export default function FullFunnelPage() {
         </div>
 
         {/* Funnel Stages */}
+        {/* Mobile: vertical card stack; Desktop: trapezoid funnel */}
         <div className="flex flex-col items-center gap-0">
           {stages.map((stage, idx) => {
             const color = STAGE_COLORS[idx];
-            // Progressive narrowing: from 100% to ~50%
             const widthPct = 100 - (idx * 5.5);
             const isGray = !stage.hasData;
 
@@ -229,19 +229,16 @@ export default function FullFunnelPage() {
                   </div>
                 )}
                 <div
-                  className={`rounded-lg border-2 px-4 py-3 transition-all ${
+                  className={`rounded-lg border-2 px-3 sm:px-4 py-3 transition-all w-full ${
                     isGray ? "bg-muted/50 border-muted text-muted-foreground" : `${color.bg} ${color.border} ${color.text}`
                   }`}
-                  style={{ width: `${widthPct}%`, minWidth: "280px" }}
+                  style={{ maxWidth: `${widthPct}%` }}
                 >
-                  {/* Stage label */}
                   <p className="text-[10px] font-bold uppercase tracking-widest opacity-70 text-center mb-1.5">
                     {stage.label}
                   </p>
-                  {/* Three columns */}
-                  <div className="grid grid-cols-3 items-center text-center gap-1">
-                    {/* Cost */}
-                    <div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 items-center text-center gap-1">
+                    <div className="hidden sm:block">
                       {stage.costLabel ? (
                         <>
                           <p className="text-[10px] uppercase opacity-60">{stage.costLabel}</p>
@@ -249,18 +246,25 @@ export default function FullFunnelPage() {
                         </>
                       ) : <div />}
                     </div>
-                    {/* Volume */}
                     <div>
                       <p className="text-lg font-bold leading-tight">{stage.volume}</p>
                     </div>
-                    {/* Rate */}
-                    <div>
+                    <div className="hidden sm:block">
                       {stage.rateLabel ? (
                         <>
                           <p className="text-[10px] uppercase opacity-60">{stage.rateLabel}</p>
                           <p className="text-xs font-semibold">{stage.rateValue}</p>
                         </>
                       ) : <div />}
+                    </div>
+                    {/* Mobile: show cost and rate inline */}
+                    <div className="sm:hidden flex justify-center gap-4 text-[10px]">
+                      {stage.costLabel && (
+                        <span><span className="opacity-60">{stage.costLabel}:</span> <span className="font-semibold">{stage.costValue}</span></span>
+                      )}
+                      {stage.rateLabel && (
+                        <span><span className="opacity-60">{stage.rateLabel}:</span> <span className="font-semibold">{stage.rateValue}</span></span>
+                      )}
                     </div>
                   </div>
                 </div>

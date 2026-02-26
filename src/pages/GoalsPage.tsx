@@ -104,15 +104,26 @@ export default function GoalsPage() {
                 <CardTitle className="text-base">Funil Reverso</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {steps.map((s, i) => (
-                  <div key={i} className="flex flex-col items-center w-full">
-                    <div className={`w-full sm:${s.width} ${s.color} rounded-lg px-4 py-3 text-center text-primary-foreground transition-all`}>
-                      <p className="text-base sm:text-lg font-bold">{s.value} {s.label}</p>
-                      <p className="text-xs opacity-80">{s.math}</p>
+                {steps.map((s, i) => {
+                  const widthMap: Record<string, string> = {
+                    "w-[45%]": "sm:w-[45%]",
+                    "w-[55%]": "sm:w-[55%]",
+                    "w-[65%]": "sm:w-[65%]",
+                    "w-[78%]": "sm:w-[78%]",
+                    "w-[90%]": "sm:w-[90%]",
+                    "w-[100%]": "sm:w-full",
+                  };
+                  const smWidth = widthMap[s.width] || "sm:w-full";
+                  return (
+                    <div key={i} className="flex flex-col items-center w-full">
+                      <div className={`w-full ${smWidth} ${s.color} rounded-lg px-4 py-3 text-center text-primary-foreground transition-all`}>
+                        <p className="text-base sm:text-lg font-bold">{s.value} {s.label}</p>
+                        <p className="text-xs opacity-80">{s.math}</p>
+                      </div>
+                      {i < steps.length - 1 && <TrendingDown className="my-1 h-4 w-4 text-muted-foreground" />}
                     </div>
-                    {i < steps.length - 1 && <TrendingDown className="my-1 h-4 w-4 text-muted-foreground" />}
-                  </div>
-                ))}
+                  );
+                })}
               </CardContent>
             </Card>
 
