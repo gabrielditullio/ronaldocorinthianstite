@@ -255,7 +255,7 @@ export default function GoalSimulatorPage() {
                       <span className="font-medium text-foreground">{r.label}</span>
                       <span className="text-muted-foreground">
                         {fmtPct(r.original)} → <span className="font-semibold text-foreground">{fmtPct(r.improved)}</span>
-                        {r.value > 0 && <span className="ml-1 text-emerald-600">(+{r.value}%)</span>}
+                        {r.value > 0 && <span className="ml-1 text-success">(+{r.value}%)</span>}
                       </span>
                     </div>
                     <div className="flex items-center gap-3">
@@ -277,7 +277,7 @@ export default function GoalSimulatorPage() {
             {/* Result highlight */}
             {hasImprovement && (
               <>
-                <Card className="border-emerald-200 bg-emerald-50/50">
+                <Card className="border-success/30 bg-success/5">
                   <CardContent className="py-6 text-center space-y-3">
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
                       <div>
@@ -286,11 +286,11 @@ export default function GoalSimulatorPage() {
                       </div>
                       <div className="text-2xl text-muted-foreground">→</div>
                       <div>
-                        <p className="text-xs font-medium uppercase tracking-wider text-emerald-600">Resultado Projetado</p>
-                        <p className="text-4xl font-bold text-emerald-700">{fmtCurrency(projectedRevenue)}</p>
+                        <p className="text-xs font-medium uppercase tracking-wider text-success">Resultado Projetado</p>
+                        <p className="text-4xl font-bold text-success">{fmtCurrency(projectedRevenue)}</p>
                       </div>
                     </div>
-                    <p className="text-lg font-semibold text-emerald-600">
+                    <p className="text-lg font-semibold text-success">
                       Variação: +{fmtCurrency(revenueDiff)} (+{revenueDiffPct.toFixed(1).replace(".", ",")}%)
                     </p>
                   </CardContent>
@@ -314,12 +314,12 @@ export default function GoalSimulatorPage() {
                       </div>
                       <div className="space-y-1">
                         <div className="flex justify-between text-sm">
-                          <span className="text-emerald-600 font-medium">Resultado Projetado</span>
-                          <span className="font-bold text-emerald-700">{fmtCurrency(projectedRevenue)}</span>
+                          <span className="text-success font-medium">Resultado Projetado</span>
+                          <span className="font-bold text-success">{fmtCurrency(projectedRevenue)}</span>
                         </div>
-                        <div className="h-8 rounded-md bg-emerald-50 overflow-hidden">
+                        <div className="h-8 rounded-md bg-success/10 overflow-hidden">
                           <div
-                            className="h-full rounded-md bg-emerald-500 transition-all"
+                            className="h-full rounded-md bg-success transition-all"
                             style={{ width: `${(projectedRevenue / maxBar) * 100}%` }}
                           />
                         </div>
