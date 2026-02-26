@@ -10,6 +10,7 @@ import { ChevronDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { GUIDES, classifyValue, levelToScore, scoreToPercent, type GuideKey } from "@/data/benchmarks";
+import { MoMIndicator } from "@/components/MoMIndicator";
 
 const badgeStyles: Record<string, string> = {
   red: "bg-red-50 text-red-600 border-red-200 hover:bg-red-50",
@@ -40,16 +41,18 @@ export default function BenchmarksPage() {
     cac_commercial: "",
   });
 
-  // Pre-populate from latest monthly snapshot
+  const [prevValues, setPrevValues] = useState<Record<string, number | null>>({});
+
+  // Pre-populate from latest + previous monthly snapshot
   useEffect(() => {
     if (!profile?.id) return;
     (async () => {
       const { data } = await supabase
         .from("monthly_snapshots")
-        .select("qualification_rate, close_rate, total_revenue, total_received")
+        .select("qualification_rate, close_rate, total_revenue, total_received, month_year")
         .eq("user_id", profile.id)
         .order("month_year", { ascending: false })
-        .limit(1);
+        .limit(2);
       if (data && data.length > 0) {
         const snap = data[0] as any;
         const totalRev = snap.total_revenue ?? 0;
@@ -60,6 +63,18 @@ export default function BenchmarksPage() {
           close_rate: snap.close_rate?.toString() ?? "",
           cash_collection: cashPct > 0 ? cashPct.toFixed(1) : "",
         }));
+
+        // Previous month
+        if (data.length > 1) {
+          const prev = data[1] as any;
+          const prevRev = prev.total_revenue ?? 0;
+          const prevRec = prev.total_received ?? 0;
+          const prevCash = prevRev > 0 ? (prevRec / prevRev) * 100 : 0;
+          setPrevValues({
+            close_rate: prev.close_rate != null ? Number(prev.close_rate) * 100 : null,
+            cash_collection: prevCash > 0 ? prevCash : null,
+          });
+        }
       }
     })();
   }, [profile?.id]);
@@ -201,19 +216,29 @@ export default function BenchmarksPage() {
                         </span>
                       )}
                     </div>
-                    {level && (
-                      <div className="flex items-center gap-2">
-                        <Badge
-                          className={`border ${badgeStyles[level.color]}`}
-                          variant="outline"
-                        >
-                          {level.label}
-                        </Badge>
-                        <CollapsibleTrigger className="p-1 rounded hover:bg-muted transition-colors">
-                          <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                        </CollapsibleTrigger>
-                      </div>
-                    )}
+                    <div className="flex items-center gap-3">
+                      {val !== null && (
+                        <MoMIndicator
+                          current={val}
+                          previous={prevValues[metric.key] ?? null}
+                          format={(v) => `${v.toFixed(1)}${metric.suffix}`}
+                          invertColor={metric.key === "cac_commercial"}
+                        />
+                      )}
+                      {level && (
+                        <div className="flex items-center gap-2">
+                          <Badge
+                            className={`border ${badgeStyles[level.color]}`}
+                            variant="outline"
+                          >
+                            {level.label}
+                          </Badge>
+                          <CollapsibleTrigger className="p-1 rounded hover:bg-muted transition-colors">
+                            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                          </CollapsibleTrigger>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   {/* Progress bar */}
