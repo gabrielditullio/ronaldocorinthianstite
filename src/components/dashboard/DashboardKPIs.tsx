@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Users, TrendingUp, TrendingDown, DollarSign, Target, BarChart3 } from "lucide-react";
+import { MoMIndicator } from "@/components/MoMIndicator";
 
 interface Lead {
   id: string;
@@ -57,10 +58,15 @@ export function DashboardKPIs({ leads, snapshots }: { leads: Lead[]; snapshots: 
 
     // Prev month from snapshots
     const prevSnap = snapshots.find((s) => s.month_year === prevMonthKey());
+    const curSnap = snapshots.find((s) => s.month_year === currentMonthKey());
     const prevRevenue = prevSnap?.total_revenue ?? null;
     const prevDeals = prevSnap?.deals_closed ?? null;
+    const prevLeads = prevSnap?.leads_generated ?? null;
+    const curLeads = curSnap?.leads_generated ?? null;
+    const prevConversion = prevSnap && prevSnap.leads_generated && prevSnap.leads_generated > 0 && prevSnap.deals_closed != null
+      ? (prevSnap.deals_closed / prevSnap.leads_generated) * 100 : null;
 
-    return { totalActive, conversionRate, revenueThisMonth, goalPercent, forecast, prevRevenue, prevDeals, target };
+    return { totalActive, conversionRate, revenueThisMonth, goalPercent, forecast, prevRevenue, prevDeals, target, prevLeads, curLeads, prevConversion };
   }, [leads, snapshots]);
 
   const kpis = [
@@ -70,6 +76,7 @@ export function DashboardKPIs({ leads, snapshots }: { leads: Lead[]; snapshots: 
       icon: Users,
       iconBg: "bg-primary/10",
       iconColor: "text-primary",
+      mom: { current: stats.totalActive, previous: stats.prevLeads, format: (v: number) => String(v) },
     },
     {
       label: "Taxa de Conversão",
@@ -78,6 +85,7 @@ export function DashboardKPIs({ leads, snapshots }: { leads: Lead[]; snapshots: 
       iconBg: "bg-success/10",
       iconColor: "text-success",
       alert: stats.conversionRate < 20,
+      mom: { current: stats.conversionRate, previous: stats.prevConversion, format: (v: number) => `${v.toFixed(1)}%` },
     },
     {
       label: "Receita do Mês",
@@ -85,9 +93,7 @@ export function DashboardKPIs({ leads, snapshots }: { leads: Lead[]; snapshots: 
       icon: DollarSign,
       iconBg: "bg-success/10",
       iconColor: "text-success",
-      sub: stats.prevRevenue != null
-        ? `Mês anterior: ${formatBRL(stats.prevRevenue)}`
-        : undefined,
+      mom: { current: stats.revenueThisMonth, previous: stats.prevRevenue, format: formatBRL },
     },
     {
       label: "Meta Atingida",
@@ -120,6 +126,15 @@ export function DashboardKPIs({ leads, snapshots }: { leads: Lead[]; snapshots: 
             <p className="mt-3 text-2xl font-bold tracking-tight">{kpi.value}</p>
             <p className="text-xs text-muted-foreground">{kpi.label}</p>
             {kpi.sub && <p className="mt-1 text-[11px] text-muted-foreground">{kpi.sub}</p>}
+            {(kpi as any).mom && (
+              <div className="mt-1.5">
+                <MoMIndicator
+                  current={(kpi as any).mom.current}
+                  previous={(kpi as any).mom.previous}
+                  format={(kpi as any).mom.format}
+                />
+              </div>
+            )}
           </CardContent>
         </Card>
       ))}

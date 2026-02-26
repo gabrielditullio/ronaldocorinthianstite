@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Users, TrendingUp, Target, Calendar } from "lucide-react";
+import { MoMIndicator } from "@/components/MoMIndicator";
 
 const MONTHS_PT = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
 
@@ -46,6 +47,7 @@ export default function SellerKPIsPage() {
   const [rows, setRows] = useState<DayRow[]>([]);
   const [saving, setSaving] = useState(false);
   const [allSellersData, setAllSellersData] = useState<Record<string, DayRow[]>>({});
+  const [prevTotals, setPrevTotals] = useState<{ sales: number; revenue: number; leads: number; meetings_scheduled: number; meetings_completed: number } | null>(null);
 
   const totalDays = daysInMonth(month, year);
 
@@ -61,35 +63,62 @@ export default function SellerKPIsPage() {
       });
   }, [user]);
 
-  // Fetch KPIs for selected seller
+  // Fetch KPIs for selected seller (current + previous month)
   useEffect(() => {
     if (!user || !selectedSeller || viewAll) return;
     const startDate = `${year}-${String(month + 1).padStart(2, "0")}-01`;
     const endDate = `${year}-${String(month + 1).padStart(2, "0")}-${String(totalDays).padStart(2, "0")}`;
 
-    supabase.from("daily_seller_kpis").select("*")
-      .eq("user_id", user.id).eq("team_member_id", selectedSeller)
-      .gte("date", startDate).lte("date", endDate)
-      .then(({ data }) => {
-        const mapped: Record<number, DayRow> = {};
-        data?.forEach((r: any) => {
-          const d = new Date(r.date).getDate();
-          mapped[d] = {
-            day: d,
-            leads_generated: r.leads_generated ?? 0,
-            leads_qualified: r.leads_qualified ?? 0,
-            meetings_scheduled: r.meetings_scheduled ?? 0,
-            meetings_completed: r.meetings_completed ?? 0,
-            sales: r.sales ?? 0,
-            revenue: Number(r.revenue) || 0,
-          };
-        });
-        const newRows: DayRow[] = [];
-        for (let i = 1; i <= totalDays; i++) {
-          newRows.push(mapped[i] || { day: i, leads_generated: 0, leads_qualified: 0, meetings_scheduled: 0, meetings_completed: 0, sales: 0, revenue: 0 });
-        }
-        setRows(newRows);
+    // Previous month
+    const prevDate = new Date(year, month - 1, 1);
+    const prevY = prevDate.getFullYear();
+    const prevM = prevDate.getMonth();
+    const prevDays = daysInMonth(prevM, prevY);
+    const prevStartDate = `${prevY}-${String(prevM + 1).padStart(2, "0")}-01`;
+    const prevEndDate = `${prevY}-${String(prevM + 1).padStart(2, "0")}-${String(prevDays).padStart(2, "0")}`;
+
+    Promise.all([
+      supabase.from("daily_seller_kpis").select("*")
+        .eq("user_id", user.id).eq("team_member_id", selectedSeller)
+        .gte("date", startDate).lte("date", endDate),
+      supabase.from("daily_seller_kpis").select("*")
+        .eq("user_id", user.id).eq("team_member_id", selectedSeller)
+        .gte("date", prevStartDate).lte("date", prevEndDate),
+    ]).then(([{ data }, { data: prevData }]) => {
+      const mapped: Record<number, DayRow> = {};
+      data?.forEach((r: any) => {
+        const d = new Date(r.date).getDate();
+        mapped[d] = {
+          day: d,
+          leads_generated: r.leads_generated ?? 0,
+          leads_qualified: r.leads_qualified ?? 0,
+          meetings_scheduled: r.meetings_scheduled ?? 0,
+          meetings_completed: r.meetings_completed ?? 0,
+          sales: r.sales ?? 0,
+          revenue: Number(r.revenue) || 0,
+        };
       });
+      const newRows: DayRow[] = [];
+      for (let i = 1; i <= totalDays; i++) {
+        newRows.push(mapped[i] || { day: i, leads_generated: 0, leads_qualified: 0, meetings_scheduled: 0, meetings_completed: 0, sales: 0, revenue: 0 });
+      }
+      setRows(newRows);
+
+      // Previous month totals
+      if (prevData && prevData.length > 0) {
+        const pt = { sales: 0, revenue: 0, leads: 0, meetings_scheduled: 0, meetings_completed: 0 };
+        prevData.forEach((r: any) => {
+          pt.sales += r.sales ?? 0;
+          pt.revenue += Number(r.revenue) || 0;
+          pt.leads += r.leads_generated ?? 0;
+          pt.meetings_scheduled += r.meetings_scheduled ?? 0;
+          pt.meetings_completed += r.meetings_completed ?? 0;
+        });
+        setPrevTotals(pt);
+      } else {
+        setPrevTotals(null);
+      }
+    });
   }, [user, selectedSeller, month, year, viewAll, totalDays]);
 
   // Fetch all sellers data for consolidated view
@@ -227,9 +256,9 @@ export default function SellerKPIsPage() {
           <>
             {/* Performance cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2"><TrendingUp className="h-4 w-4" />Total Vendas</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold">{totals.sales}</p><p className="text-xs text-muted-foreground">Ticket Médio: R$ {avgTicket.toFixed(2)}</p></CardContent></Card>
-              <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2"><Target className="h-4 w-4" />Taxa Conversão</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold">{conversionRate.toFixed(1)}%</p></CardContent></Card>
-              <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2"><Users className="h-4 w-4" />Show Rate</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold">{showRate.toFixed(1)}%</p></CardContent></Card>
+              <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2"><TrendingUp className="h-4 w-4" />Total Vendas</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold">{totals.sales}</p><p className="text-xs text-muted-foreground">Ticket Médio: R$ {avgTicket.toFixed(2)}</p><div className="mt-1"><MoMIndicator current={totals.sales} previous={prevTotals?.sales ?? null} format={v => String(v)} /></div></CardContent></Card>
+              <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2"><Target className="h-4 w-4" />Taxa Conversão</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold">{conversionRate.toFixed(1)}%</p><div className="mt-1"><MoMIndicator current={conversionRate} previous={prevTotals && prevTotals.leads > 0 ? (prevTotals.sales / prevTotals.leads) * 100 : null} format={v => `${v.toFixed(1)}%`} /></div></CardContent></Card>
+              <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2"><Users className="h-4 w-4" />Show Rate</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold">{showRate.toFixed(1)}%</p><div className="mt-1"><MoMIndicator current={showRate} previous={prevTotals && prevTotals.meetings_scheduled > 0 ? (prevTotals.meetings_completed / prevTotals.meetings_scheduled) * 100 : null} format={v => `${v.toFixed(1)}%`} /></div></CardContent></Card>
               <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2"><Calendar className="h-4 w-4" />Reuniões/Dia</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold">{meetingsPerDay.toFixed(1)}</p></CardContent></Card>
             </div>
 

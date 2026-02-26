@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import { MoMIndicator } from "@/components/MoMIndicator";
 
 const MONTHS = [
   "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
@@ -46,6 +47,7 @@ export default function PaidTrafficPage() {
   const [rows, setRows] = useState<DayRow[]>([]);
   const [saving, setSaving] = useState(false);
   const [monthlyRevenue, setMonthlyRevenue] = useState(0);
+  const [prevMonthData, setPrevMonthData] = useState<{ investment: number; cpl: number; ctr: number; roas: number } | null>(null);
 
   const numDays = daysInMonth(month, year);
   const monthYear = `${year}-${String(month + 1).padStart(2, "0")}`;
@@ -61,14 +63,20 @@ export default function PaidTrafficPage() {
     });
   }, [numDays, month, year]);
 
-  // Load data
   useEffect(() => {
     if (!profile?.id) return;
     const startDate = `${monthYear}-01`;
     const endDate = `${monthYear}-${String(numDays).padStart(2, "0")}`;
 
+    // Calculate previous month
+    const prevDate = new Date(year, month - 1, 1);
+    const prevMonthYear = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, "0")}`;
+    const prevNumDays = new Date(prevDate.getFullYear(), prevDate.getMonth() + 1, 0).getDate();
+    const prevStartDate = `${prevMonthYear}-01`;
+    const prevEndDate = `${prevMonthYear}-${String(prevNumDays).padStart(2, "0")}`;
+
     const fetchData = async () => {
-      const [adRes, snapRes] = await Promise.all([
+      const [adRes, snapRes, prevAdRes, prevSnapRes] = await Promise.all([
         supabase
           .from("ad_metrics" as any)
           .select("*")
@@ -80,6 +88,18 @@ export default function PaidTrafficPage() {
           .select("total_revenue")
           .eq("user_id", profile.id)
           .eq("month_year", monthYear)
+          .limit(1),
+        supabase
+          .from("ad_metrics" as any)
+          .select("*")
+          .eq("user_id", profile.id)
+          .gte("date", prevStartDate)
+          .lte("date", prevEndDate),
+        supabase
+          .from("monthly_snapshots")
+          .select("total_revenue")
+          .eq("user_id", profile.id)
+          .eq("month_year", prevMonthYear)
           .limit(1),
       ]);
 
@@ -103,6 +123,26 @@ export default function PaidTrafficPage() {
       }
       setRows(empty);
       setMonthlyRevenue(snapRes.data?.[0]?.total_revenue ?? 0);
+
+      // Compute previous month totals
+      if (prevAdRes.data && prevAdRes.data.length > 0) {
+        const pt = { investment: 0, impressions: 0, clicks: 0, leads: 0 };
+        (prevAdRes.data as any[]).forEach(r => {
+          pt.investment += Number(r.investment) || 0;
+          pt.impressions += Number(r.impressions) || 0;
+          pt.clicks += Number(r.clicks) || 0;
+          pt.leads += Number(r.leads_from_ads) || 0;
+        });
+        const prevRev = prevSnapRes.data?.[0]?.total_revenue ?? 0;
+        setPrevMonthData({
+          investment: pt.investment,
+          cpl: pt.leads > 0 ? pt.investment / pt.leads : 0,
+          ctr: pt.impressions > 0 ? (pt.clicks / pt.impressions) * 100 : 0,
+          roas: pt.investment > 0 ? prevRev / pt.investment : 0,
+        });
+      } else {
+        setPrevMonthData(null);
+      }
     };
     fetchData();
   }, [profile?.id, monthYear, numDays, buildEmptyRows]);
@@ -222,15 +262,23 @@ export default function PaidTrafficPage() {
         {/* Summary Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {[
-            { label: "Investimento Total", value: fmtBrl(totals.investment) },
-            { label: "CPL Médio", value: fmtBrl(cpl) },
-            { label: "CTR Médio", value: fmtPct(ctr) },
-            { label: "ROAS", value: roas > 0 ? `${roas.toFixed(2).replace(".", ",")}x` : "—" },
+            { label: "Investimento Total", value: fmtBrl(totals.investment), prev: prevMonthData?.investment, fmt: fmtBrl },
+            { label: "CPL Médio", value: fmtBrl(cpl), prev: prevMonthData?.cpl, fmt: fmtBrl, invert: true },
+            { label: "CTR Médio", value: fmtPct(ctr), prev: prevMonthData?.ctr, fmt: fmtPct },
+            { label: "ROAS", value: roas > 0 ? `${roas.toFixed(2).replace(".", ",")}x` : "—", prev: prevMonthData?.roas, fmt: (v: number) => `${v.toFixed(2).replace(".", ",")}x` },
           ].map((c) => (
             <Card key={c.label}>
               <CardContent className="py-5 text-center">
                 <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{c.label}</p>
                 <p className="text-2xl font-bold text-foreground mt-1">{c.value}</p>
+                <div className="mt-1.5 flex justify-center">
+                  <MoMIndicator
+                    current={c.label === "Investimento Total" ? totals.investment : c.label === "CPL Médio" ? cpl : c.label === "CTR Médio" ? ctr : roas}
+                    previous={c.prev ?? null}
+                    format={c.fmt}
+                    invertColor={c.invert}
+                  />
+                </div>
               </CardContent>
             </Card>
           ))}
