@@ -18,6 +18,7 @@ import CACPage from "./pages/CACPage";
 import GoalsPage from "./pages/GoalsPage";
 import MeetingsPage from "./pages/MeetingsPage";
 import MonthlyPage from "./pages/MonthlyPage";
+import AlignmentPage from "./pages/AlignmentPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -43,7 +44,7 @@ const App = () => (
             <Route path="/goals" element={<ProtectedRoute><GoalsPage /></ProtectedRoute>} />
             <Route path="/meetings" element={<ProtectedRoute><MeetingsPage /></ProtectedRoute>} />
             <Route path="/monthly" element={<ProtectedRoute><MonthlyPage /></ProtectedRoute>} />
-            <Route path="/alignment" element={<ProtectedRoute><PlaceholderPage title="Alinhamento SDR-Closer" /></ProtectedRoute>} />
+            <Route path="/alignment" element={<ProtectedRoute><AlignmentPage /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><PlaceholderPage title="Configurações" /></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute><PlaceholderPage title="Admin" /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
