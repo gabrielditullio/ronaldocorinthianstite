@@ -4,6 +4,7 @@ import { Paywall } from "@/components/Paywall";
 import { AppSidebar } from "@/components/AppSidebar";
 import { SidebarProvider, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
 import { GlobalBanner } from "@/components/GlobalBanner";
+import { NotificationBell } from "@/components/NotificationBell";
 import { Loader2 } from "lucide-react";
 
 export function DashboardLayout({ children }: { children: ReactNode }) {
@@ -27,8 +28,9 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
         <AppSidebar />
         <SidebarInset>
           <GlobalBanner />
-          <header className="flex h-14 items-center gap-2 border-b px-4">
+          <header className="flex h-14 items-center justify-between border-b px-4">
             <SidebarTrigger aria-label="Abrir menu" />
+            <NotificationBell />
           </header>
           <main className="flex-1 p-4 sm:p-6 animate-fade-in">{children}</main>
         </SidebarInset>
