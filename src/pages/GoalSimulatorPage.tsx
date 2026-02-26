@@ -232,7 +232,7 @@ export default function GoalSimulatorPage() {
         {/* Save Button */}
         {canCalculate && (
           <div className="flex justify-center">
-            <Button onClick={handleSave} disabled={saving} size="lg" className="px-8">
+            <Button onClick={handleSave} disabled={saving} size="lg" className="w-full sm:w-auto px-8">
               {saving ? "Salvando…" : "Salvar Simulação"}
             </Button>
           </div>
