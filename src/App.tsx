@@ -23,6 +23,7 @@ import MonthlyPage from "./pages/MonthlyPage";
 import AlignmentPage from "./pages/AlignmentPage";
 import GoalSimulatorPage from "./pages/GoalSimulatorPage";
 import BenchmarksPage from "./pages/BenchmarksPage";
+import PaidTrafficPage from "./pages/PaidTrafficPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -53,6 +54,7 @@ const App = () => (
             <Route path="/admin" element={<ProtectedRoute><AdminPage /></ProtectedRoute>} />
             <Route path="/simulador-metas" element={<ProtectedRoute><GoalSimulatorPage /></ProtectedRoute>} />
             <Route path="/benchmarks" element={<ProtectedRoute><BenchmarksPage /></ProtectedRoute>} />
+            <Route path="/trafego-pago" element={<ProtectedRoute><PaidTrafficPage /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

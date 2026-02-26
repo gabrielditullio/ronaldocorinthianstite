@@ -14,6 +14,50 @@ export type Database = {
   }
   public: {
     Tables: {
+      ad_metrics: {
+        Row: {
+          clicks: number | null
+          created_at: string | null
+          date: string
+          id: string
+          impressions: number | null
+          investment: number | null
+          leads_from_ads: number | null
+          page_views: number | null
+          user_id: string
+        }
+        Insert: {
+          clicks?: number | null
+          created_at?: string | null
+          date: string
+          id?: string
+          impressions?: number | null
+          investment?: number | null
+          leads_from_ads?: number | null
+          page_views?: number | null
+          user_id: string
+        }
+        Update: {
+          clicks?: number | null
+          created_at?: string | null
+          date?: string
+          id?: string
+          impressions?: number | null
+          investment?: number | null
+          leads_from_ads?: number | null
+          page_views?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_metrics_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cac_calculations: {
         Row: {
           avg_ticket: number | null
