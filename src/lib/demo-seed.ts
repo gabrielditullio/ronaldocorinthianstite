@@ -185,11 +185,11 @@ export async function seedDemoData(
 
   // Step 6: Session Metrics
   onStep(6);
-  const sessionRows = [
-    { user_id: userId, session_date: "2025-11-15", notes: "Revisão de métricas Q4", action_items: "Ajustar metas SDR", key_decisions: "Aumentar investimento em tráfego pago" },
-    { user_id: userId, session_date: "2025-12-10", notes: "Planejamento 2026", action_items: "Definir OKRs", key_decisions: "Contratar 2 closers" },
-    { user_id: userId, session_date: "2026-01-20", notes: "Revisão janeiro", action_items: "Melhorar taxa de show-up", key_decisions: "Implementar lembretes automáticos" },
-    { user_id: userId, session_date: "2026-02-18", notes: "Revisão fevereiro", action_items: "Treinar equipe em objeções", key_decisions: "Novo script de vendas" },
+  const sessionRows: any[] = [
+    { user_id: userId, session_date: "2025-11-15", notes: "Revisão de métricas Q4", action_items: "Ajustar metas SDR", key_decisions: "Aumentar investimento em tráfego pago", month: 11, year: 2025, form_completion_rate: jitter(72, 0.1), scheduling_rate: jitter(28, 0.1), attendance_rate: jitter(74, 0.1), noshow_confirmed: jitter(12, 0.1), noshow_unconfirmed: jitter(35, 0.1), reschedule_rate: jitter(18, 0.1), recorded_calls_rate: jitter(85, 0.1), confirmation_rate: jitter(78, 0.1), avg_ticket: jitter(9800, 0.1) },
+    { user_id: userId, session_date: "2025-12-10", notes: "Planejamento 2026", action_items: "Definir OKRs", key_decisions: "Contratar 2 closers", month: 12, year: 2025, form_completion_rate: jitter(74, 0.1), scheduling_rate: jitter(30, 0.1), attendance_rate: jitter(76, 0.1), noshow_confirmed: jitter(11, 0.1), noshow_unconfirmed: jitter(33, 0.1), reschedule_rate: jitter(17, 0.1), recorded_calls_rate: jitter(87, 0.1), confirmation_rate: jitter(80, 0.1), avg_ticket: jitter(10000, 0.1) },
+    { user_id: userId, session_date: "2026-01-20", notes: "Revisão janeiro", action_items: "Melhorar taxa de show-up", key_decisions: "Implementar lembretes automáticos", month: 1, year: 2026, form_completion_rate: jitter(75, 0.1), scheduling_rate: jitter(31, 0.1), attendance_rate: jitter(77, 0.1), noshow_confirmed: jitter(10, 0.1), noshow_unconfirmed: jitter(30, 0.1), reschedule_rate: jitter(16, 0.1), recorded_calls_rate: jitter(88, 0.1), confirmation_rate: jitter(82, 0.1), avg_ticket: jitter(10200, 0.1) },
+    { user_id: userId, session_date: "2026-02-18", notes: "Revisão fevereiro", action_items: "Treinar equipe em objeções", key_decisions: "Novo script de vendas", month: 2, year: 2026, form_completion_rate: jitter(78, 0.1), scheduling_rate: jitter(33, 0.1), attendance_rate: jitter(79, 0.1), noshow_confirmed: jitter(9, 0.1), noshow_unconfirmed: jitter(28, 0.1), reschedule_rate: jitter(15, 0.1), recorded_calls_rate: jitter(90, 0.1), confirmation_rate: jitter(84, 0.1), avg_ticket: jitter(10500, 0.1) },
   ];
   const { error: sessErr } = await supabase.from("session_metrics").insert(sessionRows);
   if (sessErr) throw sessErr;
