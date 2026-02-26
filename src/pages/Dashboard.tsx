@@ -13,9 +13,24 @@ import { Filter } from "lucide-react";
 
 function getGreeting(): string {
   const h = new Date().getHours();
-  if (h < 12) return "Bom dia";
-  if (h < 18) return "Boa tarde";
+  if (h >= 5 && h < 12) return "Bom dia";
+  if (h >= 12 && h < 18) return "Boa tarde";
   return "Boa noite";
+}
+
+function getSubtitle(leads: any[], snapshots: any[]): string {
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+  const closedWon = leads.filter(
+    (l) => l.stage === "closed_won" && l.stage_changed_at && l.stage_changed_at >= monthStart
+  );
+  const revenue = closedWon.reduce((s: number, l: any) => s + (l.proposal_value || 0), 0);
+  const target = 100000;
+
+  if (leads.length === 0) return "Comece o dia analisando seus números. Dados são o melhor café da manhã. ☕";
+  if (revenue >= target) return "Sua equipe está acima da meta este mês. Continue assim! 🚀";
+  if (revenue >= target * 0.6) return "Você está no caminho certo para bater a meta. Foco! 💪";
+  return "Ainda dá tempo de virar o mês. Vamos analisar os gargalos. 🔍";
 }
 
 export default function Dashboard() {
@@ -75,9 +90,9 @@ export default function Dashboard() {
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold">
-            {getGreeting()}, {profile?.full_name || "Gestor"}! 👋
+            {getGreeting()}, {profile?.full_name?.split(" ")[0] || "Gestor"}! 👋
           </h1>
-          <p className="text-muted-foreground">Bom dia, Gabriel Gomes Di Tullio! 👋</p>
+          <p className="text-base text-[#6B5C54]">{getSubtitle(leads, snapshots)}</p>
         </div>
 
         {loading ?
