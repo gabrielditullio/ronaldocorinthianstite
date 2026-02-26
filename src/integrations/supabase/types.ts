@@ -120,6 +120,56 @@ export type Database = {
           },
         ]
       }
+      goal_simulations: {
+        Row: {
+          avg_ticket: number | null
+          conversion_rate: number | null
+          created_at: string | null
+          id: string
+          num_sellers: number | null
+          qualification_rate: number | null
+          scheduling_rate: number | null
+          show_rate: number | null
+          target_revenue: number | null
+          user_id: string
+          working_days: number | null
+        }
+        Insert: {
+          avg_ticket?: number | null
+          conversion_rate?: number | null
+          created_at?: string | null
+          id?: string
+          num_sellers?: number | null
+          qualification_rate?: number | null
+          scheduling_rate?: number | null
+          show_rate?: number | null
+          target_revenue?: number | null
+          user_id: string
+          working_days?: number | null
+        }
+        Update: {
+          avg_ticket?: number | null
+          conversion_rate?: number | null
+          created_at?: string | null
+          id?: string
+          num_sellers?: number | null
+          qualification_rate?: number | null
+          scheduling_rate?: number | null
+          show_rate?: number | null
+          target_revenue?: number | null
+          user_id?: string
+          working_days?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "goal_simulations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leads: {
         Row: {
           assigned_to: string | null

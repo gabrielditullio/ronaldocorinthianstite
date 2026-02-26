@@ -33,6 +33,7 @@ const navGroups = [
   {
     label: "FERRAMENTAS",
     items: [
+      { title: "Simulador de Metas", url: "/simulador-metas", icon: Calculator },
       { title: "Calculadora CAC", url: "/cac", icon: Calculator },
       { title: "Metas Reversas", url: "/goals", icon: ArrowDownUp },
       { title: "Reunião de Pipeline", url: "/meetings", icon: Handshake },
