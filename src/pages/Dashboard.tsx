@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -8,6 +8,7 @@ import { AdherenceCard } from "@/components/dashboard/AdherenceCard";
 import { FunnelChart } from "@/components/dashboard/FunnelChart";
 import { RevenueChart } from "@/components/dashboard/RevenueChart";
 import { DashboardAlerts } from "@/components/dashboard/DashboardAlerts";
+import { ChannelRevenueSection } from "@/components/dashboard/ChannelRevenueSection";
 import OnboardingWizard from "@/components/OnboardingWizard";
 import { PageSkeleton, EmptyState } from "@/components/ui/page-states";
 import { Camera } from "lucide-react";
@@ -105,6 +106,7 @@ export default function Dashboard() {
               <FunnelChart leads={leads} />
               <RevenueChart snapshots={snapshots} leads={leads} />
             </div>
+            <ChannelRevenueSection month={new Date().getMonth() + 1} year={new Date().getFullYear()} />
             <DashboardAlerts leads={leads} teamMembers={teamMembers} />
           </>
         )}
