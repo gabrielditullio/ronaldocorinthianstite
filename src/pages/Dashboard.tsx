@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { DashboardKPIs } from "@/components/dashboard/DashboardKPIs";
+import { AdherenceCard } from "@/components/dashboard/AdherenceCard";
 import { FunnelChart } from "@/components/dashboard/FunnelChart";
 import { RevenueChart } from "@/components/dashboard/RevenueChart";
 import { DashboardAlerts } from "@/components/dashboard/DashboardAlerts";
@@ -73,11 +74,18 @@ export default function Dashboard() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold">
-            {getGreeting()}, {profile?.full_name || "Gestor"}! 👋
-          </h1>
-          <p className="text-muted-foreground">Visão geral do seu pipeline comercial</p>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold">
+              {getGreeting()}, {profile?.full_name || "Gestor"}! 👋
+            </h1>
+            <p className="text-muted-foreground">Visão geral do seu pipeline comercial</p>
+          </div>
+          {!loading && leads.length > 0 && (
+            <div className="w-48 shrink-0 hidden sm:block">
+              <AdherenceCard />
+            </div>
+          )}
         </div>
 
         {loading ? (
