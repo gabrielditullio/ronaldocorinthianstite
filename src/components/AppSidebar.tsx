@@ -141,7 +141,7 @@ export function AppSidebar() {
               <p className="truncate text-xs text-muted-foreground">{profile?.email}</p>
             </div>
           )}
-          <Button variant="ghost" size="icon" onClick={signOut} className="shrink-0 h-8 w-8" title="Sair">
+          <Button variant="ghost" size="icon" onClick={signOut} className="shrink-0 h-8 w-8" aria-label="Sair da conta" title="Sair">
             <LogOut className="h-4 w-4" />
           </Button>
         </div>

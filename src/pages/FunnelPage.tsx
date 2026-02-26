@@ -10,7 +10,8 @@ import { FunnelTable } from "@/components/funnel/FunnelTable";
 import { LeadModal } from "@/components/funnel/LeadModal";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Kanban, TableIcon, Loader2 } from "lucide-react";
+import { Plus, Kanban, TableIcon, Filter } from "lucide-react";
+import { PageSkeleton, EmptyState } from "@/components/ui/page-states";
 import { toast } from "sonner";
 import type { Lead, LeadFormData, Filters } from "@/components/funnel/types";
 
@@ -148,7 +149,15 @@ export default function FunnelPage() {
         <FunnelFilters filters={filters} setFilters={setFilters} teamMembers={teamMembers} />
 
         {isLoading ? (
-          <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
+          <PageSkeleton rows={3} />
+        ) : filtered.length === 0 && leads.length === 0 ? (
+          <EmptyState
+            icon={Filter}
+            title="Nenhum lead cadastrado"
+            description="Clique em 'Novo Lead' para começar a preencher seu funil de vendas."
+            actionLabel="Novo Lead"
+            actionTo="/funnel"
+          />
         ) : view === "kanban" ? (
           <FunnelKanban leads={filtered} memberMap={memberMap} onEdit={openEdit} onStageChange={handleStageChange} />
         ) : (

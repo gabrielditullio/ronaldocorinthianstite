@@ -8,7 +8,8 @@ import { FunnelChart } from "@/components/dashboard/FunnelChart";
 import { RevenueChart } from "@/components/dashboard/RevenueChart";
 import { DashboardAlerts } from "@/components/dashboard/DashboardAlerts";
 import OnboardingWizard from "@/components/OnboardingWizard";
-import { Loader2 } from "lucide-react";
+import { PageSkeleton, EmptyState } from "@/components/ui/page-states";
+import { Filter } from "lucide-react";
 
 function getGreeting(): string {
   const h = new Date().getHours();
@@ -58,7 +59,6 @@ export default function Dashboard() {
 
   const loading = loadingLeads || loadingTeam;
 
-  // Show onboarding if active subscription, no data, and not dismissed
   const showOnboarding =
     !loading &&
     !onboardingDismissed &&
@@ -81,9 +81,15 @@ export default function Dashboard() {
         </div>
 
         {loading ? (
-          <div className="flex justify-center py-16">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          </div>
+          <PageSkeleton />
+        ) : leads.length === 0 ? (
+          <EmptyState
+            icon={Filter}
+            title="Seu painel está esperando por dados"
+            description="Adicione leads no Funil de Vendas para começar a ver suas métricas e gráficos."
+            actionLabel="Ir para o Funil"
+            actionTo="/funnel"
+          />
         ) : (
           <>
             <DashboardKPIs leads={leads} snapshots={snapshots} />
