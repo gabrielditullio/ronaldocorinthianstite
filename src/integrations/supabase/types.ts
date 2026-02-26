@@ -85,6 +85,66 @@ export type Database = {
         }
         Relationships: []
       }
+      app_settings: {
+        Row: {
+          description: string
+          id: string
+          key: string
+          updated_at: string
+          updated_by: string | null
+          value: string
+        }
+        Insert: {
+          description?: string
+          id?: string
+          key: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: string
+        }
+        Update: {
+          description?: string
+          id?: string
+          key?: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: string
+        }
+        Relationships: []
+      }
+      benchmark_configs: {
+        Row: {
+          coaching_text: string
+          funnel_type: string
+          id: string
+          level: string
+          max_value: number | null
+          metric_key: string
+          min_value: number | null
+          updated_at: string
+        }
+        Insert: {
+          coaching_text?: string
+          funnel_type: string
+          id?: string
+          level: string
+          max_value?: number | null
+          metric_key: string
+          min_value?: number | null
+          updated_at?: string
+        }
+        Update: {
+          coaching_text?: string
+          funnel_type?: string
+          id?: string
+          level?: string
+          max_value?: number | null
+          metric_key?: string
+          min_value?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       cac_calculations: {
         Row: {
           avg_ticket: number | null
