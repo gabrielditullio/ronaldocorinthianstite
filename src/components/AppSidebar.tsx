@@ -1,7 +1,7 @@
 import {
   LayoutDashboard, Stethoscope, Filter, UserCheck, Target,
   Calculator, ArrowDownUp, Handshake, BarChart3, Users,
-  Settings, ShieldCheck, LogOut, ChevronLeft, Gauge, Megaphone, Radio
+  Settings, ShieldCheck, LogOut, ChevronLeft, Gauge, Megaphone, Radio, Columns3
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
@@ -25,6 +25,7 @@ const navGroups = [
   {
     label: "PIPELINE",
     items: [
+      { title: "Pipeline de Vendas", url: "/pipeline", icon: Columns3 },
       { title: "Funil de Vendas", url: "/funnel", icon: Filter },
       { title: "Tráfego Pago", url: "/trafego-pago", icon: Megaphone },
       { title: "KPIs por Vendedor", url: "/kpis-vendedores", icon: Users },
