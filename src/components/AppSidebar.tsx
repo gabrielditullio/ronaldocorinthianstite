@@ -25,9 +25,7 @@ const navGroups = [
 {
   label: "PIPELINE",
   items: [
-  { title: "Pipeline de Vendas", url: "/pipeline", icon: Columns3 },
   { title: "Funil Completo", url: "/funil", icon: TrendingDown },
-  { title: "Funil de Vendas", url: "/funnel", icon: Filter },
   { title: "Tráfego Pago", url: "/trafego-pago", icon: Megaphone },
   { title: "KPIs por Vendedor", url: "/kpis-vendedores", icon: Users },
   { title: "Performance SDR", url: "/sdr-performance", icon: UserCheck },

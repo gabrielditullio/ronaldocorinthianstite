@@ -101,9 +101,9 @@ export default function Dashboard() {
         <EmptyState
           icon={Filter}
           title="Seu painel está esperando por dados"
-          description="Adicione leads no Funil de Vendas para começar a ver suas métricas e gráficos."
+          description="Adicione leads no Funil Completo para começar a ver suas métricas e gráficos."
           actionLabel="Ir para o Funil"
-          actionTo="/funnel" /> :
+          actionTo="/funil" /> :
 
 
         <>
