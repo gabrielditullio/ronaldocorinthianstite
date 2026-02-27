@@ -13,6 +13,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Kanban, TableIcon, Filter } from "lucide-react";
 import { PageSkeleton, EmptyState } from "@/components/ui/page-states";
 import { toast } from "sonner";
+import { trackStageTransition } from "@/lib/track-stage-transition";
 import type { Lead, LeadFormData, Filters } from "@/components/funnel/types";
 
 const emptyFilters: Filters = { assignedTo: "", source: "", stages: [], dateFrom: "", dateTo: "" };
@@ -55,22 +56,25 @@ export default function FunnelPage() {
   const saveMutation = useMutation({
     mutationFn: async ({ id, ...formData }: LeadFormData & { id?: string }) => {
       if (id) {
-        // Check if stage changed
         const existing = leads.find((l) => l.id === id);
         const updates: Record<string, unknown> = { ...formData };
         if (existing && existing.stage !== formData.stage) {
           updates.previous_stage = existing.stage;
           updates.stage_changed_at = new Date().toISOString();
+          // Track transition
+          await trackStageTransition(user!.id, id, existing.stage, formData.stage);
         }
         const { error } = await supabase.from("leads").update(updates).eq("id", id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("leads").insert({
+        const { data: newLead, error } = await supabase.from("leads").insert({
           ...formData,
           user_id: user!.id,
           stage_changed_at: new Date().toISOString(),
-        });
+        }).select("id").single();
         if (error) throw error;
+        // Track initial stage
+        await trackStageTransition(user!.id, newLead.id, null, formData.stage || "lead");
       }
     },
     onSuccess: () => {
@@ -89,6 +93,7 @@ export default function FunnelPage() {
         stage_changed_at: new Date().toISOString(),
       }).eq("id", id);
       if (error) throw error;
+      await trackStageTransition(user!.id, id, oldStage, newStage);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["leads"] });

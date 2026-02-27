@@ -6,6 +6,7 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowDown } from "lucide-react";
+import { FunnelTimingSection } from "@/components/funnel/FunnelTimingSection";
 
 const MONTHS = [
   "Janeiro","Fevereiro","Março","Abril","Maio","Junho",
@@ -293,6 +294,9 @@ export default function FullFunnelPage() {
             </CardContent>
           </Card>
         )}
+
+        {/* Funnel Timing Analysis */}
+        <FunnelTimingSection />
       </div>
     </DashboardLayout>
   );
