@@ -250,8 +250,8 @@ export default function MonthlyPage() {
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Comparativo Mensal</h1>
-            <p className="text-muted-foreground">Evolução mês a mês dos indicadores-chave</p>
+            <h1 className="text-2xl font-bold text-foreground">Comparativo</h1>
+            <p className="text-muted-foreground">Evolução período a período dos indicadores-chave</p>
           </div>
           <Button onClick={() => generateMutation.mutate()} disabled={generateMutation.isPending}>
             <Camera className="h-4 w-4 mr-2" />

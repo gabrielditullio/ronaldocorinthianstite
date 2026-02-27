@@ -1,10 +1,11 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
+import { TimePeriodSelector } from "@/components/TimePeriodSelector";
+import { useTimePeriod, toLocalDateString } from "@/contexts/TimePeriodContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -12,16 +13,6 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { MoMIndicator } from "@/components/MoMIndicator";
 import { Upload, FileSpreadsheet, CheckCircle2, AlertTriangle, Link2, X } from "lucide-react";
 import { parseAdsCsv, type ParseResult } from "@/lib/csv-ad-parser";
-
-const MONTHS = [
-  "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
-  "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
-];
-
-function daysInMonth(month: number, year: number) {
-  return new Date(year, month + 1, 0).getDate();
-}
-
 function fmtBrl(n: number) {
   if (!isFinite(n) || isNaN(n)) return "—";
   return n.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2 });
@@ -59,9 +50,10 @@ interface DayRow {
 
 export default function PaidTrafficPage() {
   const { profile } = useAuth();
-  const now = new Date();
-  const [month, setMonth] = useState(now.getMonth());
-  const [year, setYear] = useState(now.getFullYear());
+  const { startDate, endDate } = useTimePeriod();
+  
+  const month = startDate.getMonth();
+  const year = startDate.getFullYear();
   const [rows, setRows] = useState<DayRow[]>([]);
   const [saving, setSaving] = useState(false);
   const [monthlyRevenue, setMonthlyRevenue] = useState(0);
@@ -75,7 +67,7 @@ export default function PaidTrafficPage() {
   const [existingDates, setExistingDates] = useState<Set<string>>(new Set());
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const numDays = daysInMonth(month, year);
+  const numDays = new Date(year, month + 1, 0).getDate();
   const monthYear = `${year}-${String(month + 1).padStart(2, "0")}`;
 
   const buildEmptyRows = useCallback(() => {
@@ -91,19 +83,19 @@ export default function PaidTrafficPage() {
 
   useEffect(() => {
     if (!profile?.id) return;
-    const startDate = `${monthYear}-01`;
-    const endDate = `${monthYear}-${String(numDays).padStart(2, "0")}`;
+    const startDateStr = toLocalDateString(startDate);
+    const endDateStr = toLocalDateString(endDate);
     const prevDate = new Date(year, month - 1, 1);
     const prevMonthYear = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, "0")}`;
     const prevNumDays = new Date(prevDate.getFullYear(), prevDate.getMonth() + 1, 0).getDate();
-    const prevStartDate = `${prevMonthYear}-01`;
-    const prevEndDate = `${prevMonthYear}-${String(prevNumDays).padStart(2, "0")}`;
+    const prevStartDate2 = `${prevMonthYear}-01`;
+    const prevEndDate2 = `${prevMonthYear}-${String(prevNumDays).padStart(2, "0")}`;
 
     const fetchData = async () => {
       const [adRes, snapRes, prevAdRes, prevSnapRes] = await Promise.all([
-        supabase.from("ad_metrics" as any).select("*").eq("user_id", profile.id).gte("date", startDate).lte("date", endDate),
+        supabase.from("ad_metrics" as any).select("*").eq("user_id", profile.id).gte("date", startDateStr).lte("date", endDateStr),
         supabase.from("monthly_snapshots").select("total_revenue").eq("user_id", profile.id).eq("month_year", monthYear).limit(1),
-        supabase.from("ad_metrics" as any).select("*").eq("user_id", profile.id).gte("date", prevStartDate).lte("date", prevEndDate),
+        supabase.from("ad_metrics" as any).select("*").eq("user_id", profile.id).gte("date", prevStartDate2).lte("date", prevEndDate2),
         supabase.from("monthly_snapshots").select("total_revenue").eq("user_id", profile.id).eq("month_year", prevMonthYear).limit(1),
       ]);
 
@@ -150,7 +142,7 @@ export default function PaidTrafficPage() {
       }
     };
     fetchData();
-  }, [profile?.id, monthYear, numDays, buildEmptyRows]);
+  }, [profile?.id, monthYear, numDays, buildEmptyRows, startDate, endDate]);
 
   const updateCell = (idx: number, field: keyof DayRow, value: string) => {
     setRows((prev) => {
@@ -260,7 +252,6 @@ export default function PaidTrafficPage() {
   const previewRows = parseResult?.rows.slice(0, 5) ?? [];
   const totalImportInvestment = parseResult?.rows.reduce((s, r) => s + r.investment, 0) ?? 0;
 
-  const years = Array.from({ length: 5 }, (_, i) => now.getFullYear() - 2 + i);
 
   const cols: { key: keyof DayRow; label: string; type: "currency" | "number" }[] = [
     { key: "investment", label: "Investimento", type: "currency" },
@@ -274,26 +265,12 @@ export default function PaidTrafficPage() {
     <DashboardLayout>
       <div className="space-y-6 max-w-7xl mx-auto">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Tráfego Pago</h1>
-            <p className="text-muted-foreground mt-1">Acompanhe o funil completo de mídia paga</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Select value={String(month)} onValueChange={(v) => setMonth(Number(v))}>
-              <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {MONTHS.map((m, i) => <SelectItem key={i} value={String(i)}>{m}</SelectItem>)}
-              </SelectContent>
-            </Select>
-            <Select value={String(year)} onValueChange={(v) => setYear(Number(v))}>
-              <SelectTrigger className="w-24"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {years.map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Tráfego Pago</h1>
+          <p className="text-muted-foreground mt-1">Acompanhe o funil completo de mídia paga</p>
         </div>
+
+        <TimePeriodSelector />
 
         {/* Coming Soon - Direct Connection */}
         <Card className="border-dashed border-2 border-muted-foreground/30 opacity-70">

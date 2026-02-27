@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo } from "react";
 import { EmptyState } from "@/components/ui/page-states";
 import { DashboardLayout } from "@/components/DashboardLayout";
+import { TimePeriodSelector } from "@/components/TimePeriodSelector";
+import { useTimePeriod, toLocalDateString } from "@/contexts/TimePeriodContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
@@ -13,12 +15,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Users, TrendingUp, Target, Calendar } from "lucide-react";
 import { MoMIndicator } from "@/components/MoMIndicator";
-
-const MONTHS_PT = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
-
-function daysInMonth(month: number, year: number) {
-  return new Date(year, month + 1, 0).getDate();
-}
 
 interface TeamMember {
   id: string;
@@ -39,9 +35,9 @@ interface DayRow {
 export default function SellerKPIsPage() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const now = new Date();
-  const [month, setMonth] = useState(now.getMonth());
-  const [year, setYear] = useState(now.getFullYear());
+  const { startDate, endDate } = useTimePeriod();
+  const month = startDate.getMonth();
+  const year = startDate.getFullYear();
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [selectedSeller, setSelectedSeller] = useState<string>("");
   const [viewAll, setViewAll] = useState(false);
@@ -50,7 +46,7 @@ export default function SellerKPIsPage() {
   const [allSellersData, setAllSellersData] = useState<Record<string, DayRow[]>>({});
   const [prevTotals, setPrevTotals] = useState<{ sales: number; revenue: number; leads: number; meetings_scheduled: number; meetings_completed: number } | null>(null);
 
-  const totalDays = daysInMonth(month, year);
+  const totalDays = new Date(year, month + 1, 0).getDate();
 
   // Fetch team members
   useEffect(() => {
@@ -67,21 +63,21 @@ export default function SellerKPIsPage() {
   // Fetch KPIs for selected seller (current + previous month)
   useEffect(() => {
     if (!user || !selectedSeller || viewAll) return;
-    const startDate = `${year}-${String(month + 1).padStart(2, "0")}-01`;
-    const endDate = `${year}-${String(month + 1).padStart(2, "0")}-${String(totalDays).padStart(2, "0")}`;
+    const startDateStr = toLocalDateString(startDate);
+    const endDateStr = toLocalDateString(endDate);
 
     // Previous month
     const prevDate = new Date(year, month - 1, 1);
     const prevY = prevDate.getFullYear();
     const prevM = prevDate.getMonth();
-    const prevDays = daysInMonth(prevM, prevY);
+    const prevDays = new Date(prevY, prevM + 1, 0).getDate();
     const prevStartDate = `${prevY}-${String(prevM + 1).padStart(2, "0")}-01`;
     const prevEndDate = `${prevY}-${String(prevM + 1).padStart(2, "0")}-${String(prevDays).padStart(2, "0")}`;
 
     Promise.all([
       supabase.from("daily_seller_kpis").select("*")
         .eq("user_id", user.id).eq("team_member_id", selectedSeller)
-        .gte("date", startDate).lte("date", endDate),
+        .gte("date", startDateStr).lte("date", endDateStr),
       supabase.from("daily_seller_kpis").select("*")
         .eq("user_id", user.id).eq("team_member_id", selectedSeller)
         .gte("date", prevStartDate).lte("date", prevEndDate),
@@ -120,17 +116,17 @@ export default function SellerKPIsPage() {
         setPrevTotals(null);
       }
     });
-  }, [user, selectedSeller, month, year, viewAll, totalDays]);
+  }, [user, selectedSeller, month, year, viewAll, totalDays, startDate, endDate]);
 
   // Fetch all sellers data for consolidated view
   useEffect(() => {
     if (!user || !viewAll) return;
-    const startDate = `${year}-${String(month + 1).padStart(2, "0")}-01`;
-    const endDate = `${year}-${String(month + 1).padStart(2, "0")}-${String(totalDays).padStart(2, "0")}`;
+    const startDateStr = toLocalDateString(startDate);
+    const endDateStr = toLocalDateString(endDate);
 
     supabase.from("daily_seller_kpis").select("*")
       .eq("user_id", user.id)
-      .gte("date", startDate).lte("date", endDate)
+      .gte("date", startDateStr).lte("date", endDateStr)
       .then(({ data }) => {
         const grouped: Record<string, DayRow[]> = {};
         data?.forEach((r: any) => {
@@ -147,7 +143,7 @@ export default function SellerKPIsPage() {
         });
         setAllSellersData(grouped);
       });
-  }, [user, viewAll, month, year, totalDays]);
+  }, [user, viewAll, month, year, totalDays, startDate, endDate]);
 
   const totals = useMemo(() => {
     const t = { leads_generated: 0, leads_qualified: 0, meetings_scheduled: 0, meetings_completed: 0, sales: 0, revenue: 0 };
@@ -225,22 +221,16 @@ export default function SellerKPIsPage() {
     else { setSortCol(col); setSortAsc(false); }
   };
 
-  const monthYearOptions = [];
-  for (let y = year - 1; y <= year + 1; y++) {
-    for (let m = 0; m < 12; m++) {
-      monthYearOptions.push({ label: `${MONTHS_PT[m]} ${y}`, value: `${y}-${m}` });
-    }
-  }
-
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div className="flex flex-wrap items-center gap-4">
+        <div>
           <h1 className="text-2xl font-bold text-foreground">KPIs por Vendedor</h1>
-          <Select value={`${year}-${month}`} onValueChange={v => { const [y, m] = v.split("-"); setYear(+y); setMonth(+m); }}>
-            <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
-            <SelectContent>{monthYearOptions.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
-          </Select>
+        </div>
+
+        <TimePeriodSelector />
+
+        <div className="flex flex-wrap items-center gap-4">
           {!viewAll && (
             <Select value={selectedSeller} onValueChange={setSelectedSeller}>
               <SelectTrigger className="w-56"><SelectValue placeholder="Selecionar Vendedor" /></SelectTrigger>
@@ -325,7 +315,7 @@ export default function SellerKPIsPage() {
 
         {viewAll && (
           <Card>
-            <CardHeader><CardTitle>Comparativo de Vendedores — {MONTHS_PT[month]} {year}</CardTitle></CardHeader>
+            <CardHeader><CardTitle>Comparativo de Vendedores</CardTitle></CardHeader>
             <CardContent className="p-0">
               <Table>
                 <TableHeader>
