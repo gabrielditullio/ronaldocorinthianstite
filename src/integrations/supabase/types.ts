@@ -19,6 +19,7 @@ export type Database = {
           clicks: number | null
           created_at: string | null
           date: string
+          funnel_id: string | null
           id: string
           impressions: number | null
           investment: number | null
@@ -30,6 +31,7 @@ export type Database = {
           clicks?: number | null
           created_at?: string | null
           date: string
+          funnel_id?: string | null
           id?: string
           impressions?: number | null
           investment?: number | null
@@ -41,6 +43,7 @@ export type Database = {
           clicks?: number | null
           created_at?: string | null
           date?: string
+          funnel_id?: string | null
           id?: string
           impressions?: number | null
           investment?: number | null
@@ -49,6 +52,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "ad_metrics_funnel_id_fkey"
+            columns: ["funnel_id"]
+            isOneToOne: false
+            referencedRelation: "funnels"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "ad_metrics_user_id_fkey"
             columns: ["user_id"]
@@ -203,6 +213,7 @@ export type Database = {
           actual: number
           channel_id: string
           created_at: string
+          funnel_id: string | null
           id: string
           month: number
           target: number
@@ -213,6 +224,7 @@ export type Database = {
           actual?: number
           channel_id: string
           created_at?: string
+          funnel_id?: string | null
           id?: string
           month: number
           target?: number
@@ -223,6 +235,7 @@ export type Database = {
           actual?: number
           channel_id?: string
           created_at?: string
+          funnel_id?: string | null
           id?: string
           month?: number
           target?: number
@@ -238,6 +251,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "channel_monthly_data_funnel_id_fkey"
+            columns: ["funnel_id"]
+            isOneToOne: false
+            referencedRelation: "funnels"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "channel_monthly_data_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
@@ -250,6 +270,7 @@ export type Database = {
         Row: {
           created_at: string
           date: string
+          funnel_id: string | null
           id: string
           leads_generated: number
           leads_qualified: number
@@ -263,6 +284,7 @@ export type Database = {
         Insert: {
           created_at?: string
           date: string
+          funnel_id?: string | null
           id?: string
           leads_generated?: number
           leads_qualified?: number
@@ -276,6 +298,7 @@ export type Database = {
         Update: {
           created_at?: string
           date?: string
+          funnel_id?: string | null
           id?: string
           leads_generated?: number
           leads_qualified?: number
@@ -287,6 +310,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "daily_seller_kpis_funnel_id_fkey"
+            columns: ["funnel_id"]
+            isOneToOne: false
+            referencedRelation: "funnels"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "daily_seller_kpis_team_member_id_fkey"
             columns: ["team_member_id"]
@@ -356,11 +386,50 @@ export type Database = {
           },
         ]
       }
+      funnels: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          funnel_type: string
+          id: string
+          is_active: boolean | null
+          name: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          funnel_type?: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          funnel_type?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "funnels_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       goal_simulations: {
         Row: {
           avg_ticket: number | null
           conversion_rate: number | null
           created_at: string | null
+          funnel_id: string | null
           id: string
           num_sellers: number | null
           qualification_rate: number | null
@@ -374,6 +443,7 @@ export type Database = {
           avg_ticket?: number | null
           conversion_rate?: number | null
           created_at?: string | null
+          funnel_id?: string | null
           id?: string
           num_sellers?: number | null
           qualification_rate?: number | null
@@ -387,6 +457,7 @@ export type Database = {
           avg_ticket?: number | null
           conversion_rate?: number | null
           created_at?: string | null
+          funnel_id?: string | null
           id?: string
           num_sellers?: number | null
           qualification_rate?: number | null
@@ -397,6 +468,13 @@ export type Database = {
           working_days?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "goal_simulations_funnel_id_fkey"
+            columns: ["funnel_id"]
+            isOneToOne: false
+            referencedRelation: "funnels"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "goal_simulations_user_id_fkey"
             columns: ["user_id"]
@@ -455,6 +533,7 @@ export type Database = {
           contact_email: string | null
           contact_phone: string | null
           created_at: string | null
+          funnel_id: string | null
           id: string
           lead_source: string | null
           name: string
@@ -472,6 +551,7 @@ export type Database = {
           contact_email?: string | null
           contact_phone?: string | null
           created_at?: string | null
+          funnel_id?: string | null
           id?: string
           lead_source?: string | null
           name: string
@@ -489,6 +569,7 @@ export type Database = {
           contact_email?: string | null
           contact_phone?: string | null
           created_at?: string | null
+          funnel_id?: string | null
           id?: string
           lead_source?: string | null
           name?: string
@@ -509,6 +590,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "leads_funnel_id_fkey"
+            columns: ["funnel_id"]
+            isOneToOne: false
+            referencedRelation: "funnels"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "leads_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
@@ -524,6 +612,7 @@ export type Database = {
           close_rate: number | null
           created_at: string | null
           deals_closed: number | null
+          funnel_id: string | null
           id: string
           leads_generated: number | null
           ltv_cac_ratio: number | null
@@ -542,6 +631,7 @@ export type Database = {
           close_rate?: number | null
           created_at?: string | null
           deals_closed?: number | null
+          funnel_id?: string | null
           id?: string
           leads_generated?: number | null
           ltv_cac_ratio?: number | null
@@ -560,6 +650,7 @@ export type Database = {
           close_rate?: number | null
           created_at?: string | null
           deals_closed?: number | null
+          funnel_id?: string | null
           id?: string
           leads_generated?: number | null
           ltv_cac_ratio?: number | null
@@ -573,6 +664,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "monthly_snapshots_funnel_id_fkey"
+            columns: ["funnel_id"]
+            isOneToOne: false
+            referencedRelation: "funnels"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "monthly_snapshots_user_id_fkey"
             columns: ["user_id"]
@@ -652,6 +750,7 @@ export type Database = {
           actions: string | null
           created_at: string | null
           facilitator: string | null
+          funnel_id: string | null
           id: string
           meeting_date: string
           next_meeting_date: string | null
@@ -667,6 +766,7 @@ export type Database = {
           actions?: string | null
           created_at?: string | null
           facilitator?: string | null
+          funnel_id?: string | null
           id?: string
           meeting_date?: string
           next_meeting_date?: string | null
@@ -682,6 +782,7 @@ export type Database = {
           actions?: string | null
           created_at?: string | null
           facilitator?: string | null
+          funnel_id?: string | null
           id?: string
           meeting_date?: string
           next_meeting_date?: string | null
@@ -694,6 +795,13 @@ export type Database = {
           wins?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "pipeline_meetings_funnel_id_fkey"
+            columns: ["funnel_id"]
+            isOneToOne: false
+            referencedRelation: "funnels"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "pipeline_meetings_user_id_fkey"
             columns: ["user_id"]
@@ -754,6 +862,7 @@ export type Database = {
       sales_channels: {
         Row: {
           created_at: string
+          funnel_id: string | null
           id: string
           is_active: boolean
           name: string
@@ -761,6 +870,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          funnel_id?: string | null
           id?: string
           is_active?: boolean
           name: string
@@ -768,12 +878,20 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          funnel_id?: string | null
           id?: string
           is_active?: boolean
           name?: string
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "sales_channels_funnel_id_fkey"
+            columns: ["funnel_id"]
+            isOneToOne: false
+            referencedRelation: "funnels"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "sales_channels_user_id_fkey"
             columns: ["user_id"]
@@ -791,6 +909,7 @@ export type Database = {
           confirmation_rate: number | null
           created_at: string
           form_completion_rate: number | null
+          funnel_id: string | null
           id: string
           key_decisions: string | null
           month: number | null
@@ -811,6 +930,7 @@ export type Database = {
           confirmation_rate?: number | null
           created_at?: string
           form_completion_rate?: number | null
+          funnel_id?: string | null
           id?: string
           key_decisions?: string | null
           month?: number | null
@@ -831,6 +951,7 @@ export type Database = {
           confirmation_rate?: number | null
           created_at?: string
           form_completion_rate?: number | null
+          funnel_id?: string | null
           id?: string
           key_decisions?: string | null
           month?: number | null
@@ -844,7 +965,15 @@ export type Database = {
           user_id?: string
           year?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "session_metrics_funnel_id_fkey"
+            columns: ["funnel_id"]
+            isOneToOne: false
+            referencedRelation: "funnels"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       team_members: {
         Row: {
