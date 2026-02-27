@@ -1,7 +1,9 @@
 import { useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Users, TrendingUp, TrendingDown, DollarSign, Target, BarChart3 } from "lucide-react";
+import { Users, TrendingUp, DollarSign, Target, BarChart3 } from "lucide-react";
 import { MoMIndicator } from "@/components/MoMIndicator";
+import { TimePeriodState } from "@/contexts/TimePeriodContext";
+import { filterSnapshotsByRange, aggregateSnapshots } from "@/lib/period-aggregation";
 
 interface Lead {
   id: string;
@@ -16,58 +18,83 @@ interface Snapshot {
   total_revenue: number | null;
   deals_closed: number | null;
   leads_generated: number | null;
+  meetings_booked: number | null;
+  proposals_sent: number | null;
+  qualification_rate: number | null;
+  close_rate: number | null;
+  avg_ticket: number | null;
+  [key: string]: any;
 }
 
 function formatBRL(v: number): string {
   return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(v);
 }
 
-function currentMonthKey(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-}
-
-function prevMonthKey(): string {
-  const d = new Date();
-  d.setMonth(d.getMonth() - 1);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-}
-
-export function DashboardKPIs({ leads, snapshots }: { leads: Lead[]; snapshots: Snapshot[] }) {
+export function DashboardKPIs({ leads, snapshots, timePeriod }: { leads: Lead[]; snapshots: Snapshot[]; timePeriod?: TimePeriodState }) {
   const stats = useMemo(() => {
-    const now = new Date();
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    const thisMonthStr = monthStart.toISOString();
+    const startDate = timePeriod?.startDate ?? new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+    const endDate = timePeriod?.endDate ?? new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0);
+    const startIso = startDate.toISOString();
+    const endIso = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate(), 23, 59, 59).toISOString();
 
     const totalActive = leads.filter((l) => !l.stage.startsWith("closed")).length;
 
-    const thisMonthLeads = leads.filter((l) => l.created_at && l.created_at >= thisMonthStr);
-    const closedWonThisMonth = leads.filter(
-      (l) => l.stage === "closed_won" && l.stage_changed_at && l.stage_changed_at >= thisMonthStr
+    const periodLeads = leads.filter((l) => l.created_at && l.created_at >= startIso && l.created_at <= endIso);
+    const closedWonPeriod = leads.filter(
+      (l) => l.stage === "closed_won" && l.stage_changed_at && l.stage_changed_at >= startIso && l.stage_changed_at <= endIso
     );
-    const conversionRate = thisMonthLeads.length > 0
-      ? (closedWonThisMonth.length / thisMonthLeads.length) * 100
+    const conversionRate = periodLeads.length > 0
+      ? (closedWonPeriod.length / periodLeads.length) * 100
       : 0;
 
-    const revenueThisMonth = closedWonThisMonth.reduce((s, l) => s + (l.proposal_value || 0), 0);
+    const revenueThisPeriod = closedWonPeriod.reduce((s, l) => s + (l.proposal_value || 0), 0);
+
+    // Use snapshot aggregation for period data
+    const periodSnaps = filterSnapshotsByRange(snapshots, startDate, endDate);
+    const agg = aggregateSnapshots(periodSnaps);
+
     const target = 100000;
-    const goalPercent = target > 0 ? (revenueThisMonth / target) * 100 : 0;
+    const effectiveRevenue = agg.totalRevenue > 0 ? agg.totalRevenue : revenueThisPeriod;
+    const goalPercent = target > 0 ? (effectiveRevenue / target) * 100 : 0;
     const forecast = leads
       .filter((l) => l.stage === "proposal")
       .reduce((s, l) => s + (l.proposal_value || 0), 0);
 
-    // Prev month from snapshots
-    const prevSnap = snapshots.find((s) => s.month_year === prevMonthKey());
-    const curSnap = snapshots.find((s) => s.month_year === currentMonthKey());
-    const prevRevenue = prevSnap?.total_revenue ?? null;
-    const prevDeals = prevSnap?.deals_closed ?? null;
-    const prevLeads = prevSnap?.leads_generated ?? null;
-    const curLeads = curSnap?.leads_generated ?? null;
-    const prevConversion = prevSnap && prevSnap.leads_generated && prevSnap.leads_generated > 0 && prevSnap.deals_closed != null
-      ? (prevSnap.deals_closed / prevSnap.leads_generated) * 100 : null;
+    // Previous period comparison
+    let prevRevenue: number | null = null;
+    let prevLeads: number | null = null;
+    let prevConversion: number | null = null;
 
-    return { totalActive, conversionRate, revenueThisMonth, goalPercent, forecast, prevRevenue, prevDeals, target, prevLeads, curLeads, prevConversion };
-  }, [leads, snapshots]);
+    if (timePeriod?.compareEnabled && timePeriod.prevStartDate && timePeriod.prevEndDate) {
+      const prevSnaps = filterSnapshotsByRange(snapshots, timePeriod.prevStartDate, timePeriod.prevEndDate);
+      const prevAgg = aggregateSnapshots(prevSnaps);
+      prevRevenue = prevAgg.totalRevenue;
+      prevLeads = prevAgg.leadsGenerated;
+      prevConversion = prevAgg.conversionRate;
+    } else {
+      // Default: compare with previous period equivalent (monthly fallback)
+      const prevStart = new Date(startDate);
+      prevStart.setMonth(prevStart.getMonth() - 1);
+      const prevEnd = new Date(endDate);
+      prevEnd.setMonth(prevEnd.getMonth() - 1);
+      const prevSnaps = filterSnapshotsByRange(snapshots, prevStart, prevEnd);
+      if (prevSnaps.length > 0) {
+        const prevAgg = aggregateSnapshots(prevSnaps);
+        prevRevenue = prevAgg.totalRevenue;
+        prevLeads = prevAgg.leadsGenerated;
+        prevConversion = prevAgg.conversionRate;
+      }
+    }
+
+    return {
+      totalActive, conversionRate,
+      revenueThisPeriod: effectiveRevenue,
+      goalPercent, forecast, target,
+      prevRevenue, prevLeads, prevConversion,
+    };
+  }, [leads, snapshots, timePeriod]);
+
+  const isMonthly = !timePeriod || timePeriod.periodType === "monthly";
 
   const kpis = [
     {
@@ -88,12 +115,12 @@ export function DashboardKPIs({ leads, snapshots }: { leads: Lead[]; snapshots: 
       mom: { current: stats.conversionRate, previous: stats.prevConversion, format: (v: number) => `${v.toFixed(1)}%` },
     },
     {
-      label: "Receita do Mês",
-      value: formatBRL(stats.revenueThisMonth),
+      label: isMonthly ? "Receita do Mês" : "Receita do Período",
+      value: formatBRL(stats.revenueThisPeriod),
       icon: DollarSign,
       iconBg: "bg-success/10",
       iconColor: "text-success",
-      mom: { current: stats.revenueThisMonth, previous: stats.prevRevenue, format: formatBRL },
+      mom: { current: stats.revenueThisPeriod, previous: stats.prevRevenue, format: formatBRL },
     },
     {
       label: "Meta Atingida",
@@ -132,6 +159,7 @@ export function DashboardKPIs({ leads, snapshots }: { leads: Lead[]; snapshots: 
                   current={(kpi as any).mom.current}
                   previous={(kpi as any).mom.previous}
                   format={(kpi as any).mom.format}
+                  periodLabel={isMonthly ? undefined : "Período anterior"}
                 />
               </div>
             )}

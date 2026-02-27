@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { FunnelProvider } from "@/contexts/FunnelContext";
+import { TimePeriodProvider } from "@/contexts/TimePeriodContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AdminRouteGuard } from "@/components/AdminRouteGuard";
 import Login from "./pages/Login";
@@ -49,6 +50,7 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <FunnelProvider>
+          <TimePeriodProvider>
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
@@ -85,6 +87,7 @@ const App = () => (
 
             <Route path="*" element={<NotFound />} />
           </Routes>
+          </TimePeriodProvider>
           </FunnelProvider>
         </AuthProvider>
       </BrowserRouter>

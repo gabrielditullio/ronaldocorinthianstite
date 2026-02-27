@@ -1,8 +1,10 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTimePeriod } from "@/contexts/TimePeriodContext";
 import { DashboardLayout } from "@/components/DashboardLayout";
+import { TimePeriodSelector } from "@/components/TimePeriodSelector";
 import { DashboardKPIs } from "@/components/dashboard/DashboardKPIs";
 import { FunnelChart } from "@/components/dashboard/FunnelChart";
 import { RevenueChart } from "@/components/dashboard/RevenueChart";
@@ -35,6 +37,7 @@ function getSubtitle(leads: any[], snapshots: any[]): string {
 
 export default function Dashboard() {
   const { user, profile } = useAuth();
+  const timePeriod = useTimePeriod();
   const [onboardingDismissed, setOnboardingDismissed] = useState(
     () => localStorage.getItem("onboarding_complete") === "true"
   );
@@ -92,8 +95,10 @@ export default function Dashboard() {
           <h1 className="text-2xl font-bold">
             {getGreeting()}, {profile?.full_name?.split(" ")[0] || "Gestor"}! 👋
           </h1>
-          <p className="text-base text-[#6B5C54]">{getSubtitle(leads, snapshots)}</p>
+          <p className="text-base text-muted-foreground">{getSubtitle(leads, snapshots)}</p>
         </div>
+
+        <TimePeriodSelector />
 
         {loading ?
         <PageSkeleton /> :
@@ -105,17 +110,15 @@ export default function Dashboard() {
           actionLabel="Ir para o Funil"
           actionTo="/funil" /> :
 
-
         <>
-            <DashboardKPIs leads={leads} snapshots={snapshots} />
+            <DashboardKPIs leads={leads} snapshots={snapshots} timePeriod={timePeriod} />
             <div className="grid gap-4 lg:grid-cols-2">
               <FunnelChart leads={leads} />
-              <RevenueChart snapshots={snapshots} leads={leads} />
+              <RevenueChart snapshots={snapshots} leads={leads} timePeriod={timePeriod} />
             </div>
             <DashboardAlerts leads={leads} teamMembers={teamMembers} />
           </>
         }
       </div>
     </DashboardLayout>);
-
 }
