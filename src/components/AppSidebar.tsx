@@ -1,10 +1,11 @@
 import {
   LayoutDashboard, Stethoscope, Filter, UserCheck, Target,
   Calculator, ArrowDownUp, Handshake, BarChart3, Users,
-  Settings, ShieldCheck, LogOut, ChevronLeft, Gauge, Megaphone, Radio, Columns3, TrendingDown } from
+  Settings, ShieldCheck, LogOut, ChevronLeft, Gauge, Megaphone, Radio, Columns3, TrendingDown, Layers } from
 "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
+import { FunnelSelector } from "@/components/FunnelSelector";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent,
   SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem,
@@ -18,6 +19,7 @@ const navGroups = [
 {
   label: "VISÃO GERAL",
   items: [
+  { title: "Meus Funis", url: "/funis", icon: Layers },
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Diagnóstico Rápido", url: "/diagnostics", icon: Stethoscope }]
 
@@ -87,7 +89,12 @@ export function AppSidebar() {
 
       <Separator className="mx-2" />
 
-      <SidebarContent className="mt-2">
+      <div className="px-2 py-2">
+        <FunnelSelector collapsed={collapsed} />
+      </div>
+
+
+      <SidebarContent className="mt-1">
         {navGroups.map((group) =>
         <SidebarGroup key={group.label}>
             <SidebarGroupLabel>{group.label}</SidebarGroupLabel>

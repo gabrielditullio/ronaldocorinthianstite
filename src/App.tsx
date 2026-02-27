@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { FunnelProvider } from "@/contexts/FunnelContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AdminRouteGuard } from "@/components/AdminRouteGuard";
 import Login from "./pages/Login";
@@ -27,6 +28,7 @@ import PaidTrafficPage from "./pages/PaidTrafficPage";
 import SellerKPIsPage from "./pages/SellerKPIsPage";
 import ChannelsPage from "./pages/ChannelsPage";
 import SessionMetricsPage from "./pages/SessionMetricsPage";
+import FunnelManagementPage from "./pages/FunnelManagementPage";
 import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
 import AdminUsersPage from "./pages/admin/AdminUsersPage";
 import AdminHealthPage from "./pages/admin/AdminHealthPage";
@@ -46,12 +48,14 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
+          <FunnelProvider>
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/funil" element={<ProtectedRoute><FullFunnelPage /></ProtectedRoute>} />
+            <Route path="/funis" element={<ProtectedRoute><FunnelManagementPage /></ProtectedRoute>} />
             <Route path="/team" element={<ProtectedRoute><TeamPage /></ProtectedRoute>} />
             <Route path="/diagnostics" element={<ProtectedRoute><DiagnosticsPage /></ProtectedRoute>} />
             <Route path="/sdr-performance" element={<ProtectedRoute><SDRPerformancePage /></ProtectedRoute>} />
@@ -81,6 +85,7 @@ const App = () => (
 
             <Route path="*" element={<NotFound />} />
           </Routes>
+          </FunnelProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
