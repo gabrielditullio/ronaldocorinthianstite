@@ -109,7 +109,7 @@ export function DashboardAlerts({ leads, teamMembers }: { leads: Lead[]; teamMem
     <Card>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-base">Alertas e Ações</CardTitle>
-        <Link to="/funnel" className="flex items-center gap-1 text-xs text-primary hover:underline">
+        <Link to="/dashboard" className="flex items-center gap-1 text-xs text-primary hover:underline">
           Ver funil <ArrowRight className="h-3 w-3" />
         </Link>
       </CardHeader>
