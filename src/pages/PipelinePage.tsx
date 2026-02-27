@@ -13,6 +13,7 @@ import { Plus, ArrowRight, AlertTriangle, GripVertical, Calendar, User, DollarSi
 import { PageSkeleton, EmptyState } from "@/components/ui/page-states";
 import { toast } from "sonner";
 import type { Lead, LeadFormData } from "@/components/funnel/types";
+import { trackStageTransition } from "@/lib/track-stage-transition";
 import { formatBRL, daysInStage } from "@/components/funnel/types";
 
 const PIPELINE_COLUMNS = [
@@ -71,14 +72,16 @@ export default function PipelinePage() {
         if (existing && existing.stage !== formData.stage) {
           updates.previous_stage = existing.stage;
           updates.stage_changed_at = new Date().toISOString();
+          await trackStageTransition(user!.id, id, existing.stage, formData.stage);
         }
         const { error } = await supabase.from("leads").update(updates).eq("id", id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("leads").insert({
+        const { data: newLead, error } = await supabase.from("leads").insert({
           ...formData, user_id: user!.id, stage_changed_at: new Date().toISOString(),
-        });
+        }).select("id").single();
         if (error) throw error;
+        await trackStageTransition(user!.id, newLead.id, null, formData.stage || "lead");
       }
     },
     onSuccess: () => {
@@ -95,6 +98,7 @@ export default function PipelinePage() {
         stage: newStage, previous_stage: oldStage, stage_changed_at: new Date().toISOString(),
       }).eq("id", id);
       if (error) throw error;
+      await trackStageTransition(user!.id, id, oldStage, newStage);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["leads"] });

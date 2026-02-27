@@ -225,8 +225,70 @@ export async function seedDemoData(
       company: `Empresa ${randInt(100, 999)}`,
     });
   }
-  const { data: leadsData, error: leadErr } = await supabase.from("leads").insert(leadRows).select("id, stage, created_at");
+  const { data: leadsData, error: leadErr } = await supabase.from("leads").insert(leadRows).select("id, stage, created_at, lead_source");
   if (leadErr) throw leadErr;
+
+  // Generate stage transitions for each lead
+  const transitionRows: any[] = [];
+  const stageOrder = ["lead", "qualification", "meeting", "proposal", "closed_won", "closed_lost"];
+  for (const lead of leadsData!) {
+    const stageIdx = stageOrder.indexOf(lead.stage);
+    if (stageIdx < 0) continue;
+    const createdAt = new Date(lead.created_at).getTime();
+    const now = Date.now();
+    const totalMs = now - createdAt;
+    // Build list of stages this lead passed through
+    const passedStages = stageOrder.slice(0, stageIdx + 1);
+    // If closed_lost, path is lead -> ... -> closed_lost (skip closed_won)
+    const filteredStages = lead.stage === "closed_lost"
+      ? passedStages.filter(s => s !== "closed_won")
+      : passedStages.filter(s => s !== "closed_lost");
+
+    if (filteredStages.length <= 1) {
+      // Only initial stage, add one transition from null -> lead
+      transitionRows.push({
+        user_id: userId,
+        lead_id: lead.id,
+        from_stage: null,
+        to_stage: "lead",
+        transitioned_at: new Date(createdAt).toISOString(),
+      });
+      continue;
+    }
+
+    // Distribute time proportionally with some randomness
+    const segments = filteredStages.length - 1;
+    const weights = Array.from({ length: segments }, () => rand(0.5, 2));
+    const totalWeight = weights.reduce((a, b) => a + b, 0);
+
+    let cumTime = createdAt;
+    // Initial transition: null -> first stage
+    transitionRows.push({
+      user_id: userId,
+      lead_id: lead.id,
+      from_stage: null,
+      to_stage: filteredStages[0],
+      transitioned_at: new Date(createdAt).toISOString(),
+    });
+
+    for (let i = 0; i < segments; i++) {
+      const segmentMs = (weights[i] / totalWeight) * totalMs;
+      cumTime += segmentMs;
+      transitionRows.push({
+        user_id: userId,
+        lead_id: lead.id,
+        from_stage: filteredStages[i],
+        to_stage: filteredStages[i + 1],
+        transitioned_at: new Date(cumTime).toISOString(),
+      });
+    }
+  }
+
+  // Insert transitions in batches
+  for (let i = 0; i < transitionRows.length; i += 100) {
+    const { error } = await (supabase as any).from("lead_stage_transitions").insert(transitionRows.slice(i, i + 100));
+    if (error) throw error;
+  }
 
   // Pipeline meetings for leads with meeting/proposal/closed_won
   const meetingLeads = leadsData!.filter(l => ["meeting", "proposal", "closed_won"].includes(l.stage));
@@ -250,7 +312,7 @@ export async function seedDemoData(
 export async function cleanDemoData(userId: string) {
   const tables = [
     "daily_seller_kpis", "ad_metrics", "channel_monthly_data", "sales_channels",
-    "goal_simulations", "session_metrics", "leads", "pipeline_meetings",
+    "goal_simulations", "session_metrics", "lead_stage_transitions", "leads", "pipeline_meetings",
     "monthly_snapshots", "team_members",
   ];
   for (const table of tables) {

@@ -406,6 +406,48 @@ export type Database = {
           },
         ]
       }
+      lead_stage_transitions: {
+        Row: {
+          from_stage: string | null
+          id: string
+          lead_id: string
+          to_stage: string
+          transitioned_at: string
+          user_id: string
+        }
+        Insert: {
+          from_stage?: string | null
+          id?: string
+          lead_id: string
+          to_stage: string
+          transitioned_at?: string
+          user_id: string
+        }
+        Update: {
+          from_stage?: string | null
+          id?: string
+          lead_id?: string
+          to_stage?: string
+          transitioned_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_stage_transitions_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_stage_transitions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leads: {
         Row: {
           assigned_to: string | null
