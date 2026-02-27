@@ -2,19 +2,18 @@ import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTimePeriod } from "@/contexts/TimePeriodContext";
 import { DashboardLayout } from "@/components/DashboardLayout";
+import { TimePeriodSelector } from "@/components/TimePeriodSelector";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MoMIndicator } from "@/components/MoMIndicator";
 import { toast } from "sonner";
 import { Save, Lightbulb } from "lucide-react";
 import { LineChart, Line, ResponsiveContainer, Tooltip } from "recharts";
-
-const MONTHS = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
 
 interface MetricDef {
   key: string;
@@ -59,9 +58,9 @@ function fmtValue(value: number | null, suffix: string) {
 export default function SessionMetricsPage() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const now = new Date();
-  const [month, setMonth] = useState(now.getMonth() + 1);
-  const [year, setYear] = useState(now.getFullYear());
+  const { startDate } = useTimePeriod();
+  const month = startDate.getMonth() + 1;
+  const year = startDate.getFullYear();
   const [values, setValues] = useState<Record<string, string>>({});
 
   // Fetch current month data
@@ -192,31 +191,19 @@ export default function SessionMetricsPage() {
     return result;
   }, [history]);
 
-  const years = Array.from({ length: 5 }, (_, i) => now.getFullYear() - 2 + i);
-
   return (
     <DashboardLayout>
       <div className="space-y-6 max-w-5xl mx-auto">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold">Sessão Estratégica</h1>
-            <p className="text-muted-foreground">Métricas granulares do processo pré-venda</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Select value={String(month)} onValueChange={v => setMonth(Number(v))}>
-              <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
-              <SelectContent>{MONTHS.map((m, i) => <SelectItem key={i} value={String(i + 1)}>{m}</SelectItem>)}</SelectContent>
-            </Select>
-            <Select value={String(year)} onValueChange={v => setYear(Number(v))}>
-              <SelectTrigger className="w-24"><SelectValue /></SelectTrigger>
-              <SelectContent>{years.map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
+        <div>
+          <h1 className="text-2xl font-bold">Sessão Estratégica</h1>
+          <p className="text-muted-foreground">Métricas granulares do processo pré-venda</p>
         </div>
+
+        <TimePeriodSelector />
 
         {/* Input Form */}
         <Card>
-          <CardHeader><CardTitle className="text-lg">Suas Métricas — {MONTHS[month - 1]} {year}</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-lg">Suas Métricas</CardTitle></CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {METRICS.map(m => (

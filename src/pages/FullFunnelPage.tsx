@@ -2,16 +2,12 @@ import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTimePeriod, toLocalDateString } from "@/contexts/TimePeriodContext";
 import { DashboardLayout } from "@/components/DashboardLayout";
+import { TimePeriodSelector } from "@/components/TimePeriodSelector";
 import { Card, CardContent } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowDown } from "lucide-react";
 import { FunnelTimingSection } from "@/components/funnel/FunnelTimingSection";
-
-const MONTHS = [
-  "Janeiro","Fevereiro","Março","Abril","Maio","Junho",
-  "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro",
-];
 
 function fmtBrl(v: number | null) {
   if (v == null || isNaN(v)) return "—";
@@ -52,25 +48,22 @@ const STAGE_COLORS = [
 
 export default function FullFunnelPage() {
   const { user } = useAuth();
-  const now = new Date();
-  const [month, setMonth] = useState(now.getMonth());
-  const [year, setYear] = useState(now.getFullYear());
+  const { startDate, endDate } = useTimePeriod();
 
-  const monthYear = `${year}-${String(month + 1).padStart(2, "0")}`;
-  const numDays = new Date(year, month + 1, 0).getDate();
-  const startDate = `${monthYear}-01`;
-  const endDate = `${monthYear}-${String(numDays).padStart(2, "0")}`;
+  const monthYear = `${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, "0")}`;
+  const startDateStr = toLocalDateString(startDate);
+  const endDateStr = toLocalDateString(endDate);
 
   // Ad metrics
   const { data: adMetrics = [] } = useQuery({
-    queryKey: ["funil-ad", user?.id, monthYear],
+    queryKey: ["funil-ad", user?.id, startDateStr, endDateStr],
     queryFn: async () => {
       const { data } = await supabase
         .from("ad_metrics")
         .select("*")
         .eq("user_id", user!.id)
-        .gte("date", startDate)
-        .lte("date", endDate);
+        .gte("date", startDateStr)
+        .lte("date", endDateStr);
       return data || [];
     },
     enabled: !!user,
@@ -188,31 +181,15 @@ export default function FullFunnelPage() {
   const roas = hasAds && adTotals.investment > 0 ? totalRevenue / adTotals.investment : 0;
   const roi = hasAds && adTotals.investment > 0 ? ((totalRevenue - adTotals.investment) / adTotals.investment) * 100 : 0;
 
-  const years = Array.from({ length: 5 }, (_, i) => now.getFullYear() - 2 + i);
-
   return (
     <DashboardLayout>
       <div className="space-y-6 max-w-3xl mx-auto">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold">Funil Completo</h1>
-            <p className="text-muted-foreground">Visualização end-to-end: do investimento à venda</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Select value={String(month)} onValueChange={(v) => setMonth(Number(v))}>
-              <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {MONTHS.map((m, i) => <SelectItem key={i} value={String(i)}>{m}</SelectItem>)}
-              </SelectContent>
-            </Select>
-            <Select value={String(year)} onValueChange={(v) => setYear(Number(v))}>
-              <SelectTrigger className="w-24"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {years.map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
+        <div>
+          <h1 className="text-2xl font-bold">Funil Completo</h1>
+          <p className="text-muted-foreground">Visualização end-to-end: do investimento à venda</p>
         </div>
+
+        <TimePeriodSelector />
 
         {/* Funnel Stages */}
         {/* Mobile: vertical card stack; Desktop: trapezoid funnel */}

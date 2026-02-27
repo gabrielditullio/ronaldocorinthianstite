@@ -43,7 +43,7 @@ const navGroups = [
   { title: "Calculadora CAC", url: "/cac", icon: Calculator },
   { title: "Metas Reversas", url: "/goals", icon: ArrowDownUp },
   { title: "Reunião de Pipeline", url: "/meetings", icon: Handshake },
-  { title: "Comparativo Mensal", url: "/monthly", icon: BarChart3 },
+  { title: "Comparativo", url: "/monthly", icon: BarChart3 },
   { title: "Alinhamento SDR-Closer", url: "/alignment", icon: ChevronLeft }]
 
 },
