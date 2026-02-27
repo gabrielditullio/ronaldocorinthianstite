@@ -1,13 +1,17 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { MoMIndicator } from "@/components/MoMIndicator";
+import { Upload, FileSpreadsheet, CheckCircle2, AlertTriangle, Link2, X } from "lucide-react";
+import { parseAdsCsv, type ParseResult } from "@/lib/csv-ad-parser";
 
 const MONTHS = [
   "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
@@ -28,15 +32,29 @@ function fmtPct(n: number) {
   return n.toFixed(2).replace(".", ",") + "%";
 }
 
+function fmtDate(dateStr: string) {
+  const [y, m, d] = dateStr.split("-");
+  return `${d}/${m}/${y}`;
+}
+
+const FIELD_LABELS: Record<string, string> = {
+  date: "Data",
+  investment: "Investimento",
+  impressions: "Impressões",
+  clicks: "Cliques",
+  page_views: "Page Views",
+  leads_from_ads: "Leads",
+};
+
 interface DayRow {
   day: number;
-  date: string; // YYYY-MM-DD
+  date: string;
   investment: string;
   impressions: string;
   clicks: string;
   page_views: string;
   leads_from_ads: string;
-  id?: string; // existing record id
+  id?: string;
 }
 
 export default function PaidTrafficPage() {
@@ -48,6 +66,14 @@ export default function PaidTrafficPage() {
   const [saving, setSaving] = useState(false);
   const [monthlyRevenue, setMonthlyRevenue] = useState(0);
   const [prevMonthData, setPrevMonthData] = useState<{ investment: number; cpl: number; ctr: number; roas: number } | null>(null);
+  const [manualEdit, setManualEdit] = useState(false);
+
+  // CSV import state
+  const [dragOver, setDragOver] = useState(false);
+  const [parseResult, setParseResult] = useState<ParseResult | null>(null);
+  const [importing, setImporting] = useState(false);
+  const [existingDates, setExistingDates] = useState<Set<string>>(new Set());
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const numDays = daysInMonth(month, year);
   const monthYear = `${year}-${String(month + 1).padStart(2, "0")}`;
@@ -67,8 +93,6 @@ export default function PaidTrafficPage() {
     if (!profile?.id) return;
     const startDate = `${monthYear}-01`;
     const endDate = `${monthYear}-${String(numDays).padStart(2, "0")}`;
-
-    // Calculate previous month
     const prevDate = new Date(year, month - 1, 1);
     const prevMonthYear = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, "0")}`;
     const prevNumDays = new Date(prevDate.getFullYear(), prevDate.getMonth() + 1, 0).getDate();
@@ -77,41 +101,22 @@ export default function PaidTrafficPage() {
 
     const fetchData = async () => {
       const [adRes, snapRes, prevAdRes, prevSnapRes] = await Promise.all([
-        supabase
-          .from("ad_metrics" as any)
-          .select("*")
-          .eq("user_id", profile.id)
-          .gte("date", startDate)
-          .lte("date", endDate),
-        supabase
-          .from("monthly_snapshots")
-          .select("total_revenue")
-          .eq("user_id", profile.id)
-          .eq("month_year", monthYear)
-          .limit(1),
-        supabase
-          .from("ad_metrics" as any)
-          .select("*")
-          .eq("user_id", profile.id)
-          .gte("date", prevStartDate)
-          .lte("date", prevEndDate),
-        supabase
-          .from("monthly_snapshots")
-          .select("total_revenue")
-          .eq("user_id", profile.id)
-          .eq("month_year", prevMonthYear)
-          .limit(1),
+        supabase.from("ad_metrics" as any).select("*").eq("user_id", profile.id).gte("date", startDate).lte("date", endDate),
+        supabase.from("monthly_snapshots").select("total_revenue").eq("user_id", profile.id).eq("month_year", monthYear).limit(1),
+        supabase.from("ad_metrics" as any).select("*").eq("user_id", profile.id).gte("date", prevStartDate).lte("date", prevEndDate),
+        supabase.from("monthly_snapshots").select("total_revenue").eq("user_id", profile.id).eq("month_year", prevMonthYear).limit(1),
       ]);
 
       const empty = buildEmptyRows();
+      const dates = new Set<string>();
       if (adRes.data) {
         for (const rec of adRes.data as any[]) {
           const d = new Date(rec.date);
           const idx = d.getDate() - 1;
+          dates.add(rec.date);
           if (idx >= 0 && idx < empty.length) {
             empty[idx] = {
-              ...empty[idx],
-              id: rec.id,
+              ...empty[idx], id: rec.id,
               investment: rec.investment?.toString() ?? "",
               impressions: rec.impressions?.toString() ?? "",
               clicks: rec.clicks?.toString() ?? "",
@@ -122,9 +127,9 @@ export default function PaidTrafficPage() {
         }
       }
       setRows(empty);
+      setExistingDates(dates);
       setMonthlyRevenue(snapRes.data?.[0]?.total_revenue ?? 0);
 
-      // Compute previous month totals
       if (prevAdRes.data && prevAdRes.data.length > 0) {
         const pt = { investment: 0, impressions: 0, clicks: 0, leads: 0 };
         (prevAdRes.data as any[]).forEach(r => {
@@ -157,7 +162,6 @@ export default function PaidTrafficPage() {
 
   const toN = (s: string) => parseFloat(s) || 0;
 
-  // Totals
   const totals = useMemo(() => {
     const t = { investment: 0, impressions: 0, clicks: 0, page_views: 0, leads_from_ads: 0 };
     rows.forEach((r) => {
@@ -174,13 +178,8 @@ export default function PaidTrafficPage() {
   const ctr = totals.impressions > 0 ? (totals.clicks / totals.impressions) * 100 : 0;
   const roas = totals.investment > 0 ? monthlyRevenue / totals.investment : 0;
 
-  // Chart data
   const chartData = useMemo(() => {
-    return rows.map((r) => ({
-      day: r.day,
-      investimento: toN(r.investment),
-      leads: toN(r.leads_from_ads),
-    }));
+    return rows.map((r) => ({ day: r.day, investimento: toN(r.investment), leads: toN(r.leads_from_ads) }));
   }, [rows]);
 
   const handleSave = async () => {
@@ -189,32 +188,77 @@ export default function PaidTrafficPage() {
     const toUpsert = rows
       .filter((r) => toN(r.investment) > 0 || toN(r.impressions) > 0 || toN(r.clicks) > 0 || toN(r.page_views) > 0 || toN(r.leads_from_ads) > 0)
       .map((r) => ({
-        user_id: profile.id,
-        date: r.date,
-        investment: toN(r.investment),
-        impressions: Math.round(toN(r.impressions)),
-        clicks: Math.round(toN(r.clicks)),
-        page_views: Math.round(toN(r.page_views)),
+        user_id: profile.id, date: r.date,
+        investment: toN(r.investment), impressions: Math.round(toN(r.impressions)),
+        clicks: Math.round(toN(r.clicks)), page_views: Math.round(toN(r.page_views)),
         leads_from_ads: Math.round(toN(r.leads_from_ads)),
       }));
 
-    if (toUpsert.length === 0) {
-      toast.info("Nenhum dado para salvar");
-      setSaving(false);
+    if (toUpsert.length === 0) { toast.info("Nenhum dado para salvar"); setSaving(false); return; }
+
+    const { error } = await (supabase.from("ad_metrics" as any) as any).upsert(toUpsert, { onConflict: "user_id,date" });
+    setSaving(false);
+    if (error) { toast.error("Erro ao salvar dados"); console.error(error); }
+    else { toast.success("Dados salvos com sucesso!"); }
+  };
+
+  // CSV handlers
+  const handleFile = async (file: File) => {
+    if (!file.name.match(/\.(csv|xlsx?)$/i)) {
+      toast.error("Formato não suportado. Use .csv ou .xlsx");
       return;
     }
-
-    const { error } = await (supabase.from("ad_metrics" as any) as any).upsert(toUpsert, {
-      onConflict: "user_id,date",
-    });
-    setSaving(false);
-    if (error) {
-      toast.error("Erro ao salvar dados");
-      console.error(error);
-    } else {
-      toast.success("Dados salvos com sucesso!");
+    const result = await parseAdsCsv(file);
+    if (result.errors.length > 0 && result.rows.length === 0) {
+      toast.error(result.errors[0]);
+      return;
     }
+    setParseResult(result);
   };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    const file = e.dataTransfer.files[0];
+    if (file) handleFile(file);
+  };
+
+  const handleConfirmImport = async () => {
+    if (!profile?.id || !parseResult) return;
+    setImporting(true);
+
+    const toUpsert = parseResult.rows.map((r) => ({
+      user_id: profile.id, date: r.date,
+      investment: r.investment, impressions: r.impressions,
+      clicks: r.clicks, page_views: r.page_views, leads_from_ads: r.leads_from_ads,
+    }));
+
+    // Batch insert 500 at a time
+    for (let i = 0; i < toUpsert.length; i += 500) {
+      const batch = toUpsert.slice(i, i + 500);
+      const { error } = await (supabase.from("ad_metrics" as any) as any).upsert(batch, { onConflict: "user_id,date" });
+      if (error) {
+        toast.error("Erro ao importar dados");
+        console.error(error);
+        setImporting(false);
+        return;
+      }
+    }
+
+    toast.success(`${toUpsert.length} dias importados com sucesso!`);
+    setImporting(false);
+    setParseResult(null);
+    // Refresh
+    window.location.reload();
+  };
+
+  const overlappingDates = useMemo(() => {
+    if (!parseResult) return 0;
+    return parseResult.rows.filter((r) => existingDates.has(r.date)).length;
+  }, [parseResult, existingDates]);
+
+  const previewRows = parseResult?.rows.slice(0, 5) ?? [];
+  const totalImportInvestment = parseResult?.rows.reduce((s, r) => s + r.investment, 0) ?? 0;
 
   const years = Array.from({ length: 5 }, (_, i) => now.getFullYear() - 2 + i);
 
@@ -237,27 +281,166 @@ export default function PaidTrafficPage() {
           </div>
           <div className="flex items-center gap-2">
             <Select value={String(month)} onValueChange={(v) => setMonth(Number(v))}>
-              <SelectTrigger className="w-36">
-                <SelectValue />
-              </SelectTrigger>
+              <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
               <SelectContent>
-                {MONTHS.map((m, i) => (
-                  <SelectItem key={i} value={String(i)}>{m}</SelectItem>
-                ))}
+                {MONTHS.map((m, i) => <SelectItem key={i} value={String(i)}>{m}</SelectItem>)}
               </SelectContent>
             </Select>
             <Select value={String(year)} onValueChange={(v) => setYear(Number(v))}>
-              <SelectTrigger className="w-24">
-                <SelectValue />
-              </SelectTrigger>
+              <SelectTrigger className="w-24"><SelectValue /></SelectTrigger>
               <SelectContent>
-                {years.map((y) => (
-                  <SelectItem key={y} value={String(y)}>{y}</SelectItem>
-                ))}
+                {years.map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
         </div>
+
+        {/* Coming Soon - Direct Connection */}
+        <Card className="border-dashed border-2 border-muted-foreground/30 opacity-70">
+          <CardContent className="py-5 flex items-center gap-4">
+            <div className="rounded-full bg-muted p-3">
+              <Link2 className="h-6 w-6 text-muted-foreground" />
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center gap-2">
+                <p className="font-semibold text-foreground">Conexão Direta com Meta Ads</p>
+                <Badge variant="secondary" className="text-xs">Em Breve</Badge>
+              </div>
+              <p className="text-sm text-muted-foreground">Em breve: conecte sua conta e os dados serão importados automaticamente</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* CSV Import Zone / Preview */}
+        {parseResult ? (
+          /* Preview screen */
+          <Card>
+            <CardContent className="py-6 space-y-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-lg font-bold text-foreground">Prévia da Importação</h2>
+                  <div className="flex items-center gap-2 mt-1">
+                    <Badge variant="outline">{parseResult.platform}</Badge>
+                    <span className="text-sm text-muted-foreground">{parseResult.rows.length} dias de dados encontrados</span>
+                  </div>
+                </div>
+                <Button variant="ghost" size="icon" onClick={() => setParseResult(null)}>
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+
+              {parseResult.rows.length > 0 && (
+                <div className="text-sm text-muted-foreground space-y-1">
+                  <p>Período: {fmtDate(parseResult.rows[0].date)} a {fmtDate(parseResult.rows[parseResult.rows.length - 1].date)}</p>
+                  <p>Investimento total: {fmtBrl(totalImportInvestment)}</p>
+                </div>
+              )}
+
+              {/* Column mapping */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                {Object.entries(parseResult.columnMap).map(([field, original]) => (
+                  <div key={field} className="flex items-center gap-1.5 text-sm">
+                    <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />
+                    <span className="font-medium">{FIELD_LABELS[field] || field}:</span>
+                    <span className="text-muted-foreground">mapeado para '{original}'</span>
+                  </div>
+                ))}
+              </div>
+
+              {overlappingDates > 0 && (
+                <div className="flex items-center gap-2 rounded-lg bg-orange-50 border border-orange-200 p-3">
+                  <AlertTriangle className="h-4 w-4 text-orange-500 shrink-0" />
+                  <p className="text-sm text-orange-800">
+                    {overlappingDates} dias já possuem dados. Os valores serão atualizados.
+                  </p>
+                </div>
+              )}
+
+              {parseResult.errors.length > 0 && (
+                <div className="text-sm text-orange-600 space-y-0.5">
+                  {parseResult.errors.map((e, i) => <p key={i}>⚠️ {e}</p>)}
+                </div>
+              )}
+
+              {/* Preview table */}
+              {previewRows.length > 0 && (
+                <div className="overflow-x-auto rounded-lg border">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="bg-muted">
+                        <th className="px-3 py-2 text-left font-medium">Data</th>
+                        <th className="px-3 py-2 text-right font-medium">Investimento</th>
+                        <th className="px-3 py-2 text-right font-medium">Impressões</th>
+                        <th className="px-3 py-2 text-right font-medium">Cliques</th>
+                        <th className="px-3 py-2 text-right font-medium">Page Views</th>
+                        <th className="px-3 py-2 text-right font-medium">Leads</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {previewRows.map((r, i) => (
+                        <tr key={i} className={i % 2 === 0 ? "bg-background" : "bg-card"}>
+                          <td className="px-3 py-1.5">{fmtDate(r.date)}</td>
+                          <td className="px-3 py-1.5 text-right">{fmtBrl(r.investment)}</td>
+                          <td className="px-3 py-1.5 text-right">{r.impressions.toLocaleString("pt-BR")}</td>
+                          <td className="px-3 py-1.5 text-right">{r.clicks.toLocaleString("pt-BR")}</td>
+                          <td className="px-3 py-1.5 text-right">{r.page_views.toLocaleString("pt-BR")}</td>
+                          <td className="px-3 py-1.5 text-right">{r.leads_from_ads.toLocaleString("pt-BR")}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {parseResult.rows.length > 5 && (
+                    <p className="text-xs text-muted-foreground text-center py-2">
+                      ...e mais {parseResult.rows.length - 5} dias
+                    </p>
+                  )}
+                </div>
+              )}
+
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setParseResult(null)}>Cancelar</Button>
+                <Button onClick={handleConfirmImport} disabled={importing || parseResult.rows.length === 0}>
+                  {importing ? "Importando…" : "Confirmar Importação"}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          /* Upload zone */
+          <Card>
+            <CardContent className="py-6">
+              <div className="text-center mb-4">
+                <h2 className="text-lg font-bold text-foreground">Importar Dados do Meta Ads</h2>
+                <p className="text-sm text-muted-foreground">Exporte seu relatório do Gerenciador de Anúncios e faça upload aqui</p>
+              </div>
+              <div
+                className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
+                  dragOver ? "border-primary bg-primary/5" : "border-muted-foreground/30 hover:border-primary/50"
+                }`}
+                onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                onDragLeave={() => setDragOver(false)}
+                onDrop={handleDrop}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <Upload className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
+                <p className="text-sm text-muted-foreground mb-1">Arraste e solte seu arquivo aqui, ou clique para buscar</p>
+                <p className="text-xs text-muted-foreground">Formatos aceitos: .csv, .xlsx</p>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".csv,.xlsx,.xls"
+                  className="hidden"
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ""; }}
+                />
+              </div>
+              <div className="flex justify-center mt-4">
+                <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
+                  <FileSpreadsheet className="mr-2 h-4 w-4" /> Importar Arquivo
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Summary Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -305,6 +488,13 @@ export default function PaidTrafficPage() {
 
         {/* Daily Table */}
         <Card className="overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-3 border-b">
+            <p className="text-sm font-medium text-foreground">Dados Diários</p>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">Editar manualmente</span>
+              <Switch checked={manualEdit} onCheckedChange={setManualEdit} />
+            </div>
+          </div>
           <div className="overflow-x-auto [&_table_td:first-child]:sticky [&_table_td:first-child]:left-0 [&_table_td:first-child]:z-10 [&_table_td:first-child]:bg-inherit [&_table_th:first-child]:sticky [&_table_th:first-child]:left-0 [&_table_th:first-child]:z-10">
             <table className="w-full text-sm">
               <thead>
@@ -323,15 +513,25 @@ export default function PaidTrafficPage() {
                     </td>
                     {cols.map((c) => (
                       <td key={c.key} className="px-1 py-0.5">
-                        <input
-                          type="number"
-                          min={0}
-                          step={c.type === "currency" ? "0.01" : "1"}
-                          className="w-full text-right bg-transparent border border-transparent hover:border-input focus:border-ring focus:outline-none rounded px-2 py-1.5 text-sm"
-                          value={row[c.key] as string}
-                          onChange={(e) => updateCell(idx, c.key, e.target.value)}
-                          placeholder="0"
-                        />
+                        {manualEdit ? (
+                          <input
+                            type="number"
+                            min={0}
+                            step={c.type === "currency" ? "0.01" : "1"}
+                            className="w-full text-right bg-transparent border border-transparent hover:border-input focus:border-ring focus:outline-none rounded px-2 py-1.5 text-sm"
+                            value={row[c.key] as string}
+                            onChange={(e) => updateCell(idx, c.key, e.target.value)}
+                            placeholder="0"
+                          />
+                        ) : (
+                          <span className="block text-right px-2 py-1.5 text-sm text-foreground">
+                            {c.type === "currency" && toN(row[c.key] as string) > 0
+                              ? fmtBrl(toN(row[c.key] as string))
+                              : toN(row[c.key] as string) > 0
+                              ? Math.round(toN(row[c.key] as string)).toLocaleString("pt-BR")
+                              : "—"}
+                          </span>
+                        )}
                       </td>
                     ))}
                   </tr>
@@ -351,12 +551,14 @@ export default function PaidTrafficPage() {
           </div>
         </Card>
 
-        {/* Save */}
-        <div className="flex justify-end">
-          <Button onClick={handleSave} disabled={saving} size="lg" className="w-full sm:w-auto px-8">
-            {saving ? "Salvando…" : "Salvar Dados"}
-          </Button>
-        </div>
+        {/* Save (only when manual edit is on) */}
+        {manualEdit && (
+          <div className="flex justify-end">
+            <Button onClick={handleSave} disabled={saving} size="lg" className="w-full sm:w-auto px-8">
+              {saving ? "Salvando…" : "Salvar Dados"}
+            </Button>
+          </div>
+        )}
       </div>
     </DashboardLayout>
   );
