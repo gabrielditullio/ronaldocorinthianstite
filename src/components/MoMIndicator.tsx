@@ -4,10 +4,11 @@ interface MoMIndicatorProps {
   current: number | null | undefined;
   previous: number | null | undefined;
   format?: (v: number) => string;
-  invertColor?: boolean; // true for metrics where lower is better (e.g. CAC)
+  invertColor?: boolean;
+  periodLabel?: string; // e.g. "Período anterior" instead of "Mês anterior"
 }
 
-export function MoMIndicator({ current, previous, format, invertColor = false }: MoMIndicatorProps) {
+export function MoMIndicator({ current, previous, format, invertColor = false, periodLabel }: MoMIndicatorProps) {
   if (current == null || previous == null || previous === 0) {
     return (
       <div className="flex items-center gap-1">
@@ -29,6 +30,7 @@ export function MoMIndicator({ current, previous, format, invertColor = false }:
   const Icon = Math.abs(variation) < 0.5 ? Minus : isPositive ? ArrowUp : ArrowDown;
   const sign = isPositive ? "+" : "";
   const formatted = format ? format(previous) : previous.toString();
+  const label = periodLabel || "Mês anterior";
 
   return (
     <div className="space-y-0.5">
@@ -38,7 +40,7 @@ export function MoMIndicator({ current, previous, format, invertColor = false }:
           {sign}{variation.toFixed(1)}%
         </span>
       </div>
-      <p className="text-xs text-[#6B5C54]">Mês anterior: {formatted}</p>
+      <p className="text-xs text-muted-foreground">{label}: {formatted}</p>
     </div>
   );
 }
