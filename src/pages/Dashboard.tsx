@@ -221,6 +221,8 @@ export default function Dashboard() {
                 sellerKpis={filteredKpis}
               />
             </div>
+            <SellerSummaryTable sellerKpis={filteredKpis} teamMembers={teamMembers} />
+            <DailyEvolutionChart sellerKpis={filteredKpis} />
             <DashboardAlerts leads={leads} teamMembers={teamMembers} />
           </>
         )}
