@@ -46,10 +46,14 @@ function distributeSales(totalSales: number, dailyMeetings: number[]): number[] 
   return sales;
 }
 
-async function batchInsert(table: string, rows: any[], batchSize = 100) {
+async function batchInsert(table: string, rows: any[], batchSize = 500) {
   for (let i = 0; i < rows.length; i += batchSize) {
     const { error } = await (supabase as any).from(table).insert(rows.slice(i, i + batchSize));
     if (error) throw error;
+    // Small delay to avoid rate limiting (429) which can kill the session
+    if (i + batchSize < rows.length) {
+      await new Promise(r => setTimeout(r, 300));
+    }
   }
 }
 
