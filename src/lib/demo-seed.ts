@@ -406,6 +406,7 @@ export async function seedDemoData(
   if (sessErr) throw sessErr;
 
   // ── Step 7: Goal Simulations ──
+  await ensureSession();
   onStep(7);
   const sims = [
     { user_id: userId, funnel_id: funnelId, target_revenue: 300000, avg_ticket: 9500, conversion_rate: 25, show_rate: 75, scheduling_rate: 30, qualification_rate: 52, working_days: 22, num_sellers: 6 },
