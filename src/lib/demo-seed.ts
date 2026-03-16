@@ -46,8 +46,13 @@ function distributeSales(totalSales: number, dailyMeetings: number[]): number[] 
   return sales;
 }
 
-/** Ensure session is still alive before heavy operations */
+/** Refresh and ensure session is still alive before heavy operations */
 async function ensureSession() {
+  // Force a token refresh to keep the session alive
+  const { data: refreshData } = await supabase.auth.refreshSession();
+  if (refreshData?.session) return refreshData.session;
+  
+  // Fallback: check existing session
   const { data, error } = await supabase.auth.getSession();
   if (error || !data.session) {
     throw new Error("Sessão expirada. Faça login novamente e tente outra vez.");
@@ -55,18 +60,18 @@ async function ensureSession() {
   return data.session;
 }
 
-async function batchInsert(table: string, rows: any[], batchSize = 500) {
+async function batchInsert(table: string, rows: any[], batchSize = 300) {
   for (let i = 0; i < rows.length; i += batchSize) {
-    // Refresh session before each batch to prevent token expiry
-    if (i > 0 && i % 1500 === 0) {
-      await supabase.auth.refreshSession();
-      await new Promise(r => setTimeout(r, 500));
+    // Refresh session every 900 rows to prevent token expiry from rate limiting
+    if (i > 0 && i % 900 === 0) {
+      await ensureSession();
+      await new Promise(r => setTimeout(r, 800));
     }
     const { error } = await (supabase as any).from(table).insert(rows.slice(i, i + batchSize));
     if (error) throw error;
-    // Delay to avoid rate limiting (429)
+    // Delay between batches to avoid rate limiting (429)
     if (i + batchSize < rows.length) {
-      await new Promise(r => setTimeout(r, 400));
+      await new Promise(r => setTimeout(r, 600));
     }
   }
 }
