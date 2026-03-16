@@ -996,6 +996,7 @@ export type Database = {
           is_active: boolean | null
           monthly_lead_goal: number | null
           monthly_revenue_goal: number | null
+          monthly_scheduling_goal: number | null
           name: string
           phone: string | null
           role: string
@@ -1009,6 +1010,7 @@ export type Database = {
           is_active?: boolean | null
           monthly_lead_goal?: number | null
           monthly_revenue_goal?: number | null
+          monthly_scheduling_goal?: number | null
           name: string
           phone?: string | null
           role: string
@@ -1022,6 +1024,7 @@ export type Database = {
           is_active?: boolean | null
           monthly_lead_goal?: number | null
           monthly_revenue_goal?: number | null
+          monthly_scheduling_goal?: number | null
           name?: string
           phone?: string | null
           role?: string
