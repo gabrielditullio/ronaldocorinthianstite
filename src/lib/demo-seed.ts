@@ -416,6 +416,7 @@ export async function seedDemoData(
   if (simErr) throw simErr;
 
   // ── Step 8: Leads + Pipeline Meetings (200+ leads) ──
+  await ensureSession();
   onStep(8);
   const stages = ["lead", "qualification", "meeting", "proposal", "closed_won", "closed_lost"];
   const sources = ["traffic", "inbound", "referral", "outbound", "other"];
