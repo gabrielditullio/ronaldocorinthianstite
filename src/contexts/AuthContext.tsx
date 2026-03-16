@@ -66,8 +66,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             profileFetched = true;
           }
         } else if (event === 'SIGNED_OUT') {
-          setProfile(null);
-          profileFetched = false;
+          // Defensive recovery: in rate-limit races, validate session once before clearing local auth state
+          const { data: recovered } = await supabase.auth.getSession();
+          if (recovered?.session?.user) {
+            setSession(recovered.session);
+            setUser(recovered.session.user);
+            setTimeout(() => fetchProfile(recovered.session!.user.id), 0);
+            profileFetched = true;
+          } else {
+            setProfile(null);
+            profileFetched = false;
+          }
         }
         setLoading(false);
       }
