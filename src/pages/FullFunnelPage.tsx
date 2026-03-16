@@ -333,6 +333,17 @@ export default function FullFunnelPage() {
                     </div>
                     <div>
                       <p className="text-lg font-bold leading-tight">{stage.volume}</p>
+                      {compareEnabled && stage.prevVolume && (
+                        <div className="flex items-center justify-center gap-1 mt-0.5">
+                          <p className="text-[10px] opacity-50">Ant: {stage.prevVolume}</p>
+                          {stage.variationPct != null && (
+                            <span className={`inline-flex items-center text-[10px] font-semibold ${stage.variationPct > 0 ? "text-green-600" : stage.variationPct < 0 ? "text-red-500" : "opacity-50"}`}>
+                              {stage.variationPct > 0 ? <ArrowUp className="h-2.5 w-2.5" /> : stage.variationPct < 0 ? <ArrowDown className="h-2.5 w-2.5" /> : null}
+                              {stage.variationPct > 0 ? "+" : ""}{stage.variationPct.toFixed(0)}%
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </div>
                     <div className="hidden sm:block">
                       {stage.rateLabel ? (
