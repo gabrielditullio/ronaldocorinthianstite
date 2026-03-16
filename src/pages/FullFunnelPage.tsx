@@ -30,6 +30,8 @@ interface FunnelStage {
   costLabel: string;
   costValue: string;
   volume: string;
+  prevVolume?: string | null;
+  variationPct?: number | null;
   rateLabel: string;
   rateValue: string;
   hasData: boolean;
