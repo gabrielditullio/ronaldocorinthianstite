@@ -51,48 +51,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    let profileFetched = false;
+    // 1. Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        fetchProfile(session.user.id);
+      }
+      setLoading(false);
+    });
 
-    // Set up listener FIRST (Supabase best practice)
+    // 2. Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        // IGNORE token refresh events that come with null session
+        // This prevents false logouts during network hiccups
+        if (event === 'TOKEN_REFRESHED' && !session) {
+          console.warn('Token refresh returned null session, ignoring');
+          return;
+        }
+
         setSession(session);
         setUser(session?.user ?? null);
 
-        // Only fetch profile on meaningful auth events, not token refreshes
-        if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
-          if (session?.user) {
-            setTimeout(() => fetchProfile(session.user.id), 0);
-            profileFetched = true;
-          }
+        if (session?.user) {
+          // Use setTimeout to avoid Supabase deadlock during auth callback
+          setTimeout(() => fetchProfile(session.user.id), 0);
         } else if (event === 'SIGNED_OUT') {
-          // Defensive recovery: in rate-limit races, validate session once before clearing local auth state
-          const { data: recovered } = await supabase.auth.getSession();
-          const recoveredSession = recovered?.session;
-          if (recoveredSession?.user) {
-            setSession(recoveredSession);
-            setUser(recoveredSession.user);
-            setTimeout(() => fetchProfile(recoveredSession.user.id), 0);
-            profileFetched = true;
-          } else {
-            setProfile(null);
-            profileFetched = false;
-          }
+          // Only clear profile on EXPLICIT sign out, not on refresh failures
+          setProfile(null);
         }
         setLoading(false);
       }
     );
-
-    // Then get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user && !profileFetched) {
-        fetchProfile(session.user.id);
-        profileFetched = true;
-      }
-      setLoading(false);
-    });
 
     return () => subscription.unsubscribe();
   }, []);
