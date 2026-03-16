@@ -271,9 +271,15 @@ export default function TeamPage() {
                 </div>
               </div>
               {form.role === "sdr" ?
-              <div className="space-y-2">
-                  <Label htmlFor="leadGoal">Meta mensal de leads</Label>
-                  <Input id="leadGoal" type="number" min={0} value={form.monthly_lead_goal} onChange={(e) => setForm({ ...form, monthly_lead_goal: Number(e.target.value) || 0 })} />
+              <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="leadGoal">Meta mensal de leads</Label>
+                    <Input id="leadGoal" type="number" min={0} value={form.monthly_lead_goal} onChange={(e) => setForm({ ...form, monthly_lead_goal: Number(e.target.value) || 0 })} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="schedulingGoal">Meta mensal de agendamento</Label>
+                    <Input id="schedulingGoal" type="number" min={0} value={form.monthly_scheduling_goal} onChange={(e) => setForm({ ...form, monthly_scheduling_goal: Number(e.target.value) || 0 })} />
+                  </div>
                 </div> :
 
               <div className="space-y-2">
