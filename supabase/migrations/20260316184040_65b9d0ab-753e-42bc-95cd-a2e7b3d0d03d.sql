@@ -1,0 +1,1 @@
+ALTER TABLE public.daily_seller_kpis ADD COLUMN sdr_team_member_id uuid REFERENCES public.team_members(id);
