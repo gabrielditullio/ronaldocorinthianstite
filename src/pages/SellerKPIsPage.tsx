@@ -36,7 +36,8 @@ interface DayRow {
 export default function SellerKPIsPage() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const { startDate, endDate } = useTimePeriod();
+  const timePeriod = useTimePeriod();
+  const { startDate, endDate, compareEnabled } = timePeriod;
   const month = startDate.getMonth();
   const year = startDate.getFullYear();
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
