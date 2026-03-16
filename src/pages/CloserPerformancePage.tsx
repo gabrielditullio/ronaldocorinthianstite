@@ -74,7 +74,7 @@ export default function CloserPerformancePage() {
       if (error) throw error;
       return data;
     },
-    enabled: !!user && closers.length > 0,
+    enabled: !!user && closers.length > 0 && timePeriod.compareEnabled,
   });
 
   const metrics: CloserMetrics[] = useMemo(() => {
