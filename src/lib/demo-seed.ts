@@ -46,13 +46,8 @@ function distributeSales(totalSales: number, dailyMeetings: number[]): number[] 
   return sales;
 }
 
-/** Refresh and ensure session is still alive before heavy operations */
+/** Ensure session is still alive before heavy operations (without forced token refresh). */
 async function ensureSession() {
-  // Force a token refresh to keep the session alive
-  const { data: refreshData } = await supabase.auth.refreshSession();
-  if (refreshData?.session) return refreshData.session;
-  
-  // Fallback: check existing session
   const { data, error } = await supabase.auth.getSession();
   if (error || !data.session) {
     throw new Error("Sessão expirada. Faça login novamente e tente outra vez.");
@@ -60,18 +55,39 @@ async function ensureSession() {
   return data.session;
 }
 
-async function batchInsert(table: string, rows: any[], batchSize = 300) {
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+async function batchInsert(table: string, rows: any[], batchSize = 250) {
+  const maxRetries = 4;
+
   for (let i = 0; i < rows.length; i += batchSize) {
-    // Refresh session every 900 rows to prevent token expiry from rate limiting
-    if (i > 0 && i % 900 === 0) {
+    // Validate local session periodically without hitting /token refresh endpoint
+    if (i > 0 && i % 1000 === 0) {
       await ensureSession();
-      await new Promise(r => setTimeout(r, 800));
     }
-    const { error } = await (supabase as any).from(table).insert(rows.slice(i, i + batchSize));
-    if (error) throw error;
-    // Delay between batches to avoid rate limiting (429)
+
+    const chunk = rows.slice(i, i + batchSize);
+    let attempt = 0;
+
+    while (true) {
+      const { error } = await (supabase as any).from(table).insert(chunk);
+
+      if (!error) break;
+
+      const msg = `${error.message ?? ""} ${error.details ?? ""}`.toLowerCase();
+      const isRateLimitError = msg.includes("429") || msg.includes("rate limit") || msg.includes("too many requests");
+
+      if (!isRateLimitError || attempt >= maxRetries) {
+        throw error;
+      }
+
+      attempt += 1;
+      await sleep(500 * attempt);
+    }
+
+    // Small pacing between batches to keep API stable
     if (i + batchSize < rows.length) {
-      await new Promise(r => setTimeout(r, 600));
+      await sleep(700);
     }
   }
 }
