@@ -21,6 +21,12 @@ const createSupabaseBrowserClient = (): SupabaseBrowserClient =>
       storage: localStorage,
       persistSession: true,
       autoRefreshToken: true,
+      storageKey: "raioxcomercial-auth",
+      flowType: "pkce",
+    },
+    global: {
+      fetch: (url, options) =>
+        fetch(url, { ...options, signal: AbortSignal.timeout(10000) }),
     },
   });
 
