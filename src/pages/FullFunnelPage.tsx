@@ -49,7 +49,8 @@ const STAGE_COLORS = [
 
 export default function FullFunnelPage() {
   const { user } = useAuth();
-  const { startDate, endDate } = useTimePeriod();
+  const timePeriod = useTimePeriod();
+  const { startDate, endDate, compareEnabled, prevStartDate, prevEndDate } = timePeriod;
   const [sellerFilter, setSellerFilter] = useState<string>("all");
 
   const startDateStr = toLocalDateString(startDate);
