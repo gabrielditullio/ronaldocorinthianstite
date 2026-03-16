@@ -186,6 +186,12 @@ export async function seedDemoData(
   userId: string,
   onStep: (stepIndex: number) => void
 ) {
+  // Validate session is alive before starting
+  const session = await ensureSession();
+  if (session.user.id !== userId) {
+    throw new Error("Sessão não corresponde ao usuário. Faça login novamente.");
+  }
+
   // Try to find user's default funnel
   let funnelId: string | null = null;
   const { data: funnels } = await supabase.from("funnels").select("id").eq("user_id", userId).eq("is_active", true).limit(1);
