@@ -182,6 +182,18 @@ export default function FullFunnelPage() {
   const showRate = meetingsScheduled > 0 ? (meetingsCompleted / meetingsScheduled) * 100 : 0;
   const closeRate = meetingsCompleted > 0 ? (dealsClosed / meetingsCompleted) * 100 : 0;
 
+  // Previous period values for comparison
+  const prevLeadsGen = prevKpi ? prevKpi.leads : 0;
+  const prevQualified = prevKpi ? prevKpi.qualified : 0;
+  const prevScheduled = prevKpi ? prevKpi.scheduled : 0;
+  const prevCompleted = prevKpi ? prevKpi.completed : 0;
+  const prevDealsClosed = prevKpi ? prevKpi.sales : 0;
+
+  function calcVar(cur: number, prev: number | null): number | null {
+    if (!compareEnabled || prev == null || prev === 0) return null;
+    return ((cur - prev) / Math.abs(prev)) * 100;
+  }
+
   // Build funnel stages
   const stages: FunnelStage[] = [
     {
@@ -216,6 +228,8 @@ export default function FullFunnelPage() {
       label: "LEADS",
       costLabel: "CPL", costValue: hasAds && leadsGen > 0 ? fmtBrl(adTotals.investment / leadsGen) : "—",
       volume: fmtNum(leadsGen > 0 ? leadsGen : null),
+      prevVolume: compareEnabled ? fmtNum(prevLeadsGen > 0 ? prevLeadsGen : null) : null,
+      variationPct: calcVar(leadsGen, prevLeadsGen),
       rateLabel: "Tx. Conexão", rateValue: hasAds && adTotals.page_views > 0 && adTotals.leads > 0 ? fmtPct((adTotals.leads / adTotals.page_views) * 100) : "—",
       hasData: hasKpi || hasAds,
     },
@@ -223,6 +237,8 @@ export default function FullFunnelPage() {
       label: "LEADS QUALIFICADOS",
       costLabel: "Custo/Qual.", costValue: hasAds && qualified > 0 ? fmtBrl(adTotals.investment / qualified) : "—",
       volume: fmtNum(qualified > 0 ? qualified : null),
+      prevVolume: compareEnabled ? fmtNum(prevQualified > 0 ? prevQualified : null) : null,
+      variationPct: calcVar(qualified, prevQualified),
       rateLabel: "Tx. Qualif.", rateValue: fmtPct(leadsGen > 0 ? qualRate : null),
       hasData: hasKpi,
     },
@@ -230,6 +246,8 @@ export default function FullFunnelPage() {
       label: "REUNIÕES AGENDADAS",
       costLabel: "Custo/Reun.", costValue: hasAds && meetingsScheduled > 0 ? fmtBrl(adTotals.investment / meetingsScheduled) : "—",
       volume: fmtNum(meetingsScheduled > 0 ? meetingsScheduled : null),
+      prevVolume: compareEnabled ? fmtNum(prevScheduled > 0 ? prevScheduled : null) : null,
+      variationPct: calcVar(meetingsScheduled, prevScheduled),
       rateLabel: "Tx. Agend.", rateValue: fmtPct(qualified > 0 ? schedulingRate : null),
       hasData: hasKpi,
     },
@@ -237,6 +255,8 @@ export default function FullFunnelPage() {
       label: "REUNIÕES REALIZADAS",
       costLabel: "Custo/Realiz.", costValue: hasAds && meetingsCompleted > 0 ? fmtBrl(adTotals.investment / meetingsCompleted) : "—",
       volume: fmtNum(meetingsCompleted > 0 ? meetingsCompleted : null),
+      prevVolume: compareEnabled ? fmtNum(prevCompleted > 0 ? prevCompleted : null) : null,
+      variationPct: calcVar(meetingsCompleted, prevCompleted),
       rateLabel: "Show Rate", rateValue: fmtPct(meetingsScheduled > 0 ? showRate : null),
       hasData: hasKpi,
     },
@@ -244,6 +264,8 @@ export default function FullFunnelPage() {
       label: "VENDAS",
       costLabel: "CAC", costValue: hasAds && dealsClosed > 0 ? fmtBrl(adTotals.investment / dealsClosed) : "—",
       volume: fmtNum(dealsClosed > 0 ? dealsClosed : null),
+      prevVolume: compareEnabled ? fmtNum(prevDealsClosed > 0 ? prevDealsClosed : null) : null,
+      variationPct: calcVar(dealsClosed, prevDealsClosed),
       rateLabel: "Close Rate", rateValue: fmtPct(meetingsCompleted > 0 ? closeRate : null),
       hasData: hasKpi,
     },
