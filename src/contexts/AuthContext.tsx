@@ -52,44 +52,59 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let mounted = true;
-    let profileFetchedForUser = '';
+    let profileLoaded = false;
+
+    const safeLoadProfile = async (userId: string) => {
+      if (profileLoaded || !mounted) return;
+      try {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", userId)
+          .single();
+
+        if (error) return;
+
+        if (mounted) {
+          setProfile(data as unknown as Profile | null);
+          profileLoaded = true;
+        }
+      } catch {
+        // Profile fetch failed — do NOT logout, just leave profile null
+      }
+    };
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!mounted) return;
       setSession(session);
       setUser(session?.user ?? null);
-      if (session?.user && profileFetchedForUser !== session.user.id) {
-        profileFetchedForUser = session.user.id;
-        fetchProfile(session.user.id);
-      }
+      if (session?.user) safeLoadProfile(session.user.id);
       setLoading(false);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         if (!mounted) return;
-
-        if (!session && event === 'TOKEN_REFRESHED') return;
-        if (!session && event === 'INITIAL_SESSION') return;
+        if (event === 'TOKEN_REFRESHED' && !session) return;
+        if (event === 'INITIAL_SESSION' && !session) {
+          setLoading(false);
+          return;
+        }
 
         if (event === 'SIGNED_OUT') {
           setSession(null);
           setUser(null);
           setProfile(null);
+          profileLoaded = false;
           setLoading(false);
           return;
         }
 
         setSession(session);
         setUser(session?.user ?? null);
-
-        if (session?.user && profileFetchedForUser !== session.user.id) {
-          profileFetchedForUser = session.user.id;
-          setTimeout(() => {
-            if (mounted) fetchProfile(session.user.id);
-          }, 100);
+        if (session?.user && !profileLoaded) {
+          setTimeout(() => safeLoadProfile(session.user.id), 100);
         }
-
         setLoading(false);
       }
     );

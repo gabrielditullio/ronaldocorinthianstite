@@ -44,9 +44,13 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 60_000,
+      gcTime: 300_000,
       refetchOnWindowFocus: false,
-      retry: 1,
-      retryDelay: 5_000,
+      refetchOnReconnect: false,
+      retry: (failureCount, error: any) => {
+        if (error?.status === 401 || error?.status === 403 || error?.status === 429) return false;
+        return failureCount < 1;
+      },
     },
   },
 });
