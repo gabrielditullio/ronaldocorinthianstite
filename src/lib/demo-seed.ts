@@ -213,6 +213,7 @@ export async function seedDemoData(
   if (snapErr) throw snapErr;
 
   // ── Step 3: Daily Seller KPIs (all 12 months) ──
+  await ensureSession();
   onStep(3);
   const kpiRows: any[] = [];
 
