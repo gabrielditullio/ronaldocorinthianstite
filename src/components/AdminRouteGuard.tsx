@@ -14,12 +14,6 @@ export function AdminRouteGuard({ children }: { children: React.ReactNode }) {
     profile?.is_admin === true ||
     String(profile?.is_admin) === "true";
 
-  console.log('[DEBUG GUARD] loading:', loading);
-  console.log('[DEBUG GUARD] session:', !!session);
-  console.log('[DEBUG GUARD] profile loaded:', !!profile);
-  console.log('[DEBUG GUARD] role:', profile?.role);
-  console.log('[DEBUG GUARD] is_admin:', profile?.is_admin);
-  console.log('[DEBUG GUARD] access granted:', isAdmin);
 
   useEffect(() => {
     if (!loading && profile && session && !isAdmin && !toastShown.current) {
