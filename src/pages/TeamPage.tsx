@@ -87,6 +87,7 @@ export default function TeamPage() {
         phone: data.phone.trim() || null,
         monthly_lead_goal: data.monthly_lead_goal,
         monthly_revenue_goal: data.monthly_revenue_goal,
+        monthly_scheduling_goal: data.monthly_scheduling_goal,
         user_id: user!.id
       };
       if (data.id) {
