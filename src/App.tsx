@@ -28,7 +28,7 @@ import BenchmarksPage from "./pages/BenchmarksPage";
 import PaidTrafficPage from "./pages/PaidTrafficPage";
 import SellerKPIsPage from "./pages/SellerKPIsPage";
 import ChannelsPage from "./pages/ChannelsPage";
-import SessionMetricsPage from "./pages/SessionMetricsPage";
+
 import FunnelManagementPage from "./pages/FunnelManagementPage";
 import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
 import AdminUsersPage from "./pages/admin/AdminUsersPage";
@@ -82,7 +82,7 @@ const App = () => (
             <Route path="/trafego-pago" element={<ProtectedRoute><PaidTrafficPage /></ProtectedRoute>} />
             <Route path="/kpis-vendedores" element={<ProtectedRoute><SellerKPIsPage /></ProtectedRoute>} />
             <Route path="/canais" element={<ProtectedRoute><ChannelsPage /></ProtectedRoute>} />
-            <Route path="/sessao-estrategica" element={<ProtectedRoute><SessionMetricsPage /></ProtectedRoute>} />
+            
 
             {/* Admin routes */}
             <Route path="/admin" element={<AdminRouteGuard><AdminDashboardPage /></AdminRouteGuard>} />
