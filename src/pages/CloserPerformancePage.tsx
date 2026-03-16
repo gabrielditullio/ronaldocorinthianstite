@@ -164,7 +164,7 @@ export default function CloserPerformancePage() {
                 <div>
                   <p className="text-2xl font-bold">{formatBRL(totalRevenue)}</p>
                   <p className="text-xs text-muted-foreground">Faturamento</p>
-                  <MoMIndicator current={totalRevenue} previous={prevAgg.revenue || null} format={formatBRL} />
+                  {timePeriod.compareEnabled && <MoMIndicator current={totalRevenue} previous={prevAgg.revenue || null} format={formatBRL} />}
                 </div>
               </CardContent></Card>
               <Card><CardContent className="p-4 flex items-center gap-3">
