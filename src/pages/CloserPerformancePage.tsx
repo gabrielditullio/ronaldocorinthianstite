@@ -74,7 +74,7 @@ export default function CloserPerformancePage() {
       if (error) throw error;
       return data;
     },
-    enabled: !!user && closers.length > 0,
+    enabled: !!user && closers.length > 0 && timePeriod.compareEnabled,
   });
 
   const metrics: CloserMetrics[] = useMemo(() => {
@@ -164,7 +164,7 @@ export default function CloserPerformancePage() {
                 <div>
                   <p className="text-2xl font-bold">{formatBRL(totalRevenue)}</p>
                   <p className="text-xs text-muted-foreground">Faturamento</p>
-                  <MoMIndicator current={totalRevenue} previous={prevAgg.revenue || null} format={formatBRL} />
+                  {timePeriod.compareEnabled && <MoMIndicator current={totalRevenue} previous={prevAgg.revenue || null} format={formatBRL} />}
                 </div>
               </CardContent></Card>
               <Card><CardContent className="p-4 flex items-center gap-3">
@@ -172,7 +172,7 @@ export default function CloserPerformancePage() {
                 <div>
                   <p className="text-2xl font-bold">{formatBRL(totalNetRevenue)}</p>
                   <p className="text-xs text-muted-foreground">Receita</p>
-                  <MoMIndicator current={totalNetRevenue} previous={prevAgg.netRevenue || null} format={formatBRL} />
+                  {timePeriod.compareEnabled && <MoMIndicator current={totalNetRevenue} previous={prevAgg.netRevenue || null} format={formatBRL} />}
                 </div>
               </CardContent></Card>
               <Card><CardContent className="p-4 flex items-center gap-3">

@@ -7,7 +7,7 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import { TimePeriodSelector } from "@/components/TimePeriodSelector";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowDown } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowDownIcon } from "lucide-react";
 import { FunnelTimingSection } from "@/components/funnel/FunnelTimingSection";
 
 function fmtBrl(v: number | null) {
@@ -30,6 +30,8 @@ interface FunnelStage {
   costLabel: string;
   costValue: string;
   volume: string;
+  prevVolume?: string | null;
+  variationPct?: number | null;
   rateLabel: string;
   rateValue: string;
   hasData: boolean;
@@ -49,7 +51,8 @@ const STAGE_COLORS = [
 
 export default function FullFunnelPage() {
   const { user } = useAuth();
-  const { startDate, endDate } = useTimePeriod();
+  const timePeriod = useTimePeriod();
+  const { startDate, endDate, compareEnabled, prevStartDate, prevEndDate } = timePeriod;
   const [sellerFilter, setSellerFilter] = useState<string>("all");
 
   const startDateStr = toLocalDateString(startDate);
@@ -79,6 +82,23 @@ export default function FullFunnelPage() {
     enabled: !!user,
   });
 
+  // Previous period KPIs
+  const prevStartStr = prevStartDate ? toLocalDateString(prevStartDate) : "";
+  const prevEndStr = prevEndDate ? toLocalDateString(prevEndDate) : "";
+
+  const { data: prevSellerKpis = [] } = useQuery({
+    queryKey: ["fullfunnel-kpis-prev", prevStartStr, prevEndStr],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("daily_seller_kpis")
+        .select("*")
+        .gte("date", prevStartStr)
+        .lte("date", prevEndStr);
+      return data || [];
+    },
+    enabled: !!user && compareEnabled && !!prevStartDate,
+  });
+
   // Ad metrics
   const { data: adMetrics = [] } = useQuery({
     queryKey: ["fullfunnel-ad", startDateStr, endDateStr],
@@ -99,6 +119,11 @@ export default function FullFunnelPage() {
     return sellerKpis.filter((k) => k.team_member_id === sellerFilter);
   }, [sellerKpis, sellerFilter]);
 
+  const filteredPrevKpis = useMemo(() => {
+    if (sellerFilter === "all") return prevSellerKpis;
+    return prevSellerKpis.filter((k) => k.team_member_id === sellerFilter);
+  }, [prevSellerKpis, sellerFilter]);
+
   // Aggregate KPIs
   const kpi = useMemo(() => {
     const a = { leads: 0, qualified: 0, scheduled: 0, completed: 0, sales: 0, revenue: 0 };
@@ -112,6 +137,20 @@ export default function FullFunnelPage() {
     });
     return a;
   }, [filteredKpis]);
+
+  const prevKpi = useMemo(() => {
+    if (!compareEnabled) return null;
+    const a = { leads: 0, qualified: 0, scheduled: 0, completed: 0, sales: 0, revenue: 0 };
+    filteredPrevKpis.forEach((k) => {
+      a.leads += k.leads_generated ?? 0;
+      a.qualified += k.leads_qualified ?? 0;
+      a.scheduled += k.meetings_scheduled ?? 0;
+      a.completed += k.meetings_completed ?? 0;
+      a.sales += k.sales ?? 0;
+      a.revenue += Number(k.revenue) || 0;
+    });
+    return a;
+  }, [filteredPrevKpis, compareEnabled]);
 
   const hasKpi = kpi.leads > 0 || kpi.sales > 0 || kpi.scheduled > 0;
 
@@ -142,6 +181,18 @@ export default function FullFunnelPage() {
   const schedulingRate = qualified > 0 ? (meetingsScheduled / qualified) * 100 : 0;
   const showRate = meetingsScheduled > 0 ? (meetingsCompleted / meetingsScheduled) * 100 : 0;
   const closeRate = meetingsCompleted > 0 ? (dealsClosed / meetingsCompleted) * 100 : 0;
+
+  // Previous period values for comparison
+  const prevLeadsGen = prevKpi ? prevKpi.leads : 0;
+  const prevQualified = prevKpi ? prevKpi.qualified : 0;
+  const prevScheduled = prevKpi ? prevKpi.scheduled : 0;
+  const prevCompleted = prevKpi ? prevKpi.completed : 0;
+  const prevDealsClosed = prevKpi ? prevKpi.sales : 0;
+
+  function calcVar(cur: number, prev: number | null): number | null {
+    if (!compareEnabled || prev == null || prev === 0) return null;
+    return ((cur - prev) / Math.abs(prev)) * 100;
+  }
 
   // Build funnel stages
   const stages: FunnelStage[] = [
@@ -177,6 +228,8 @@ export default function FullFunnelPage() {
       label: "LEADS",
       costLabel: "CPL", costValue: hasAds && leadsGen > 0 ? fmtBrl(adTotals.investment / leadsGen) : "—",
       volume: fmtNum(leadsGen > 0 ? leadsGen : null),
+      prevVolume: compareEnabled ? fmtNum(prevLeadsGen > 0 ? prevLeadsGen : null) : null,
+      variationPct: calcVar(leadsGen, prevLeadsGen),
       rateLabel: "Tx. Conexão", rateValue: hasAds && adTotals.page_views > 0 && adTotals.leads > 0 ? fmtPct((adTotals.leads / adTotals.page_views) * 100) : "—",
       hasData: hasKpi || hasAds,
     },
@@ -184,6 +237,8 @@ export default function FullFunnelPage() {
       label: "LEADS QUALIFICADOS",
       costLabel: "Custo/Qual.", costValue: hasAds && qualified > 0 ? fmtBrl(adTotals.investment / qualified) : "—",
       volume: fmtNum(qualified > 0 ? qualified : null),
+      prevVolume: compareEnabled ? fmtNum(prevQualified > 0 ? prevQualified : null) : null,
+      variationPct: calcVar(qualified, prevQualified),
       rateLabel: "Tx. Qualif.", rateValue: fmtPct(leadsGen > 0 ? qualRate : null),
       hasData: hasKpi,
     },
@@ -191,6 +246,8 @@ export default function FullFunnelPage() {
       label: "REUNIÕES AGENDADAS",
       costLabel: "Custo/Reun.", costValue: hasAds && meetingsScheduled > 0 ? fmtBrl(adTotals.investment / meetingsScheduled) : "—",
       volume: fmtNum(meetingsScheduled > 0 ? meetingsScheduled : null),
+      prevVolume: compareEnabled ? fmtNum(prevScheduled > 0 ? prevScheduled : null) : null,
+      variationPct: calcVar(meetingsScheduled, prevScheduled),
       rateLabel: "Tx. Agend.", rateValue: fmtPct(qualified > 0 ? schedulingRate : null),
       hasData: hasKpi,
     },
@@ -198,6 +255,8 @@ export default function FullFunnelPage() {
       label: "REUNIÕES REALIZADAS",
       costLabel: "Custo/Realiz.", costValue: hasAds && meetingsCompleted > 0 ? fmtBrl(adTotals.investment / meetingsCompleted) : "—",
       volume: fmtNum(meetingsCompleted > 0 ? meetingsCompleted : null),
+      prevVolume: compareEnabled ? fmtNum(prevCompleted > 0 ? prevCompleted : null) : null,
+      variationPct: calcVar(meetingsCompleted, prevCompleted),
       rateLabel: "Show Rate", rateValue: fmtPct(meetingsScheduled > 0 ? showRate : null),
       hasData: hasKpi,
     },
@@ -205,6 +264,8 @@ export default function FullFunnelPage() {
       label: "VENDAS",
       costLabel: "CAC", costValue: hasAds && dealsClosed > 0 ? fmtBrl(adTotals.investment / dealsClosed) : "—",
       volume: fmtNum(dealsClosed > 0 ? dealsClosed : null),
+      prevVolume: compareEnabled ? fmtNum(prevDealsClosed > 0 ? prevDealsClosed : null) : null,
+      variationPct: calcVar(dealsClosed, prevDealsClosed),
       rateLabel: "Close Rate", rateValue: fmtPct(meetingsCompleted > 0 ? closeRate : null),
       hasData: hasKpi,
     },
@@ -272,6 +333,17 @@ export default function FullFunnelPage() {
                     </div>
                     <div>
                       <p className="text-lg font-bold leading-tight">{stage.volume}</p>
+                      {compareEnabled && stage.prevVolume && (
+                        <div className="flex items-center justify-center gap-1 mt-0.5">
+                          <p className="text-[10px] opacity-50">Ant: {stage.prevVolume}</p>
+                          {stage.variationPct != null && (
+                            <span className={`inline-flex items-center text-[10px] font-semibold ${stage.variationPct > 0 ? "text-green-600" : stage.variationPct < 0 ? "text-red-500" : "opacity-50"}`}>
+                              {stage.variationPct > 0 ? <ArrowUp className="h-2.5 w-2.5" /> : stage.variationPct < 0 ? <ArrowDown className="h-2.5 w-2.5" /> : null}
+                              {stage.variationPct > 0 ? "+" : ""}{stage.variationPct.toFixed(0)}%
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </div>
                     <div className="hidden sm:block">
                       {stage.rateLabel ? (
