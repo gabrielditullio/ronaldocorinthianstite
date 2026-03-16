@@ -278,6 +278,7 @@ export type Database = {
           meetings_scheduled: number
           revenue: number
           sales: number
+          sdr_team_member_id: string | null
           team_member_id: string
           user_id: string
         }
@@ -292,6 +293,7 @@ export type Database = {
           meetings_scheduled?: number
           revenue?: number
           sales?: number
+          sdr_team_member_id?: string | null
           team_member_id: string
           user_id: string
         }
@@ -306,6 +308,7 @@ export type Database = {
           meetings_scheduled?: number
           revenue?: number
           sales?: number
+          sdr_team_member_id?: string | null
           team_member_id?: string
           user_id?: string
         }
@@ -315,6 +318,13 @@ export type Database = {
             columns: ["funnel_id"]
             isOneToOne: false
             referencedRelation: "funnels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_seller_kpis_sdr_team_member_id_fkey"
+            columns: ["sdr_team_member_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
             referencedColumns: ["id"]
           },
           {

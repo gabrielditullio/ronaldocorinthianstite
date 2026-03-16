@@ -6,6 +6,7 @@ import { useTimePeriod, toLocalDateString } from "@/contexts/TimePeriodContext";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { TimePeriodSelector } from "@/components/TimePeriodSelector";
 import { Card, CardContent } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowDown } from "lucide-react";
 import { FunnelTimingSection } from "@/components/funnel/FunnelTimingSection";
 
@@ -49,19 +50,28 @@ const STAGE_COLORS = [
 export default function FullFunnelPage() {
   const { user } = useAuth();
   const { startDate, endDate } = useTimePeriod();
+  const [sellerFilter, setSellerFilter] = useState<string>("all");
 
-  const monthYear = `${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, "0")}`;
   const startDateStr = toLocalDateString(startDate);
   const endDateStr = toLocalDateString(endDate);
 
-  // Ad metrics
-  const { data: adMetrics = [] } = useQuery({
-    queryKey: ["funil-ad", user?.id, startDateStr, endDateStr],
+  // Team members
+  const { data: teamMembers = [] } = useQuery({
+    queryKey: ["fullfunnel-team"],
+    queryFn: async () => {
+      const { data } = await supabase.from("team_members").select("id, name, role").eq("is_active", true);
+      return data || [];
+    },
+    enabled: !!user,
+  });
+
+  // Daily seller KPIs (primary source)
+  const { data: sellerKpis = [] } = useQuery({
+    queryKey: ["fullfunnel-kpis", startDateStr, endDateStr],
     queryFn: async () => {
       const { data } = await supabase
-        .from("ad_metrics")
+        .from("daily_seller_kpis")
         .select("*")
-        .eq("user_id", user!.id)
         .gte("date", startDateStr)
         .lte("date", endDateStr);
       return data || [];
@@ -69,21 +79,43 @@ export default function FullFunnelPage() {
     enabled: !!user,
   });
 
-  // Monthly snapshot
-  const { data: snapshot } = useQuery({
-    queryKey: ["funil-snap", user?.id, monthYear],
+  // Ad metrics
+  const { data: adMetrics = [] } = useQuery({
+    queryKey: ["fullfunnel-ad", startDateStr, endDateStr],
     queryFn: async () => {
       const { data } = await supabase
-        .from("monthly_snapshots")
+        .from("ad_metrics")
         .select("*")
-        .eq("user_id", user!.id)
-        .eq("month_year", monthYear)
-        .single();
-      return data;
+        .gte("date", startDateStr)
+        .lte("date", endDateStr);
+      return data || [];
     },
     enabled: !!user,
   });
 
+  // Filter KPIs by seller
+  const filteredKpis = useMemo(() => {
+    if (sellerFilter === "all") return sellerKpis;
+    return sellerKpis.filter((k) => k.team_member_id === sellerFilter);
+  }, [sellerKpis, sellerFilter]);
+
+  // Aggregate KPIs
+  const kpi = useMemo(() => {
+    const a = { leads: 0, qualified: 0, scheduled: 0, completed: 0, sales: 0, revenue: 0 };
+    filteredKpis.forEach((k) => {
+      a.leads += k.leads_generated ?? 0;
+      a.qualified += k.leads_qualified ?? 0;
+      a.scheduled += k.meetings_scheduled ?? 0;
+      a.completed += k.meetings_completed ?? 0;
+      a.sales += k.sales ?? 0;
+      a.revenue += Number(k.revenue) || 0;
+    });
+    return a;
+  }, [filteredKpis]);
+
+  const hasKpi = kpi.leads > 0 || kpi.sales > 0 || kpi.scheduled > 0;
+
+  // Ad totals
   const adTotals = useMemo(() => {
     const t = { investment: 0, impressions: 0, clicks: 0, page_views: 0, leads: 0 };
     adMetrics.forEach((r: any) => {
@@ -97,19 +129,19 @@ export default function FullFunnelPage() {
   }, [adMetrics]);
 
   const hasAds = adTotals.investment > 0;
-  const hasSnap = !!snapshot;
 
-  const leadsGen = snapshot?.leads_generated ?? 0;
-  const qualRate = snapshot?.qualification_rate ?? 0;
-  const qualified = leadsGen > 0 ? Math.round(leadsGen * qualRate / 100) : 0;
-  const meetingsBooked = snapshot?.meetings_booked ?? 0;
-  const proposalsSent = snapshot?.proposals_sent ?? 0;
-  const dealsClosed = snapshot?.deals_closed ?? 0;
-  const totalRevenue = snapshot?.total_revenue ?? 0;
-  const closeRate = snapshot?.close_rate ?? 0;
+  // Use KPI data for funnel stages; ad metrics for traffic stages
+  const leadsGen = hasKpi ? kpi.leads : (hasAds ? adTotals.leads : 0);
+  const qualified = hasKpi ? kpi.qualified : 0;
+  const meetingsScheduled = hasKpi ? kpi.scheduled : 0;
+  const meetingsCompleted = hasKpi ? kpi.completed : 0;
+  const dealsClosed = hasKpi ? kpi.sales : 0;
+  const totalRevenue = hasKpi ? kpi.revenue : 0;
 
-  const schedulingRate = qualified > 0 ? (meetingsBooked / qualified) * 100 : 0;
-  const showRate = meetingsBooked > 0 ? (proposalsSent / meetingsBooked) * 100 : 0;
+  const qualRate = leadsGen > 0 ? (qualified / leadsGen) * 100 : 0;
+  const schedulingRate = qualified > 0 ? (meetingsScheduled / qualified) * 100 : 0;
+  const showRate = meetingsScheduled > 0 ? (meetingsCompleted / meetingsScheduled) * 100 : 0;
+  const closeRate = meetingsCompleted > 0 ? (dealsClosed / meetingsCompleted) * 100 : 0;
 
   // Build funnel stages
   const stages: FunnelStage[] = [
@@ -143,38 +175,38 @@ export default function FullFunnelPage() {
     },
     {
       label: "LEADS",
-      costLabel: "CPL", costValue: hasAds && adTotals.leads > 0 ? fmtBrl(adTotals.investment / adTotals.leads) : (hasSnap && leadsGen > 0 && hasAds ? fmtBrl(adTotals.investment / leadsGen) : "—"),
-      volume: fmtNum(hasSnap ? leadsGen : (hasAds ? adTotals.leads : null)),
+      costLabel: "CPL", costValue: hasAds && leadsGen > 0 ? fmtBrl(adTotals.investment / leadsGen) : "—",
+      volume: fmtNum(leadsGen > 0 ? leadsGen : null),
       rateLabel: "Tx. Conexão", rateValue: hasAds && adTotals.page_views > 0 && adTotals.leads > 0 ? fmtPct((adTotals.leads / adTotals.page_views) * 100) : "—",
-      hasData: hasSnap || hasAds,
+      hasData: hasKpi || hasAds,
     },
     {
       label: "LEADS QUALIFICADOS",
       costLabel: "Custo/Qual.", costValue: hasAds && qualified > 0 ? fmtBrl(adTotals.investment / qualified) : "—",
-      volume: fmtNum(hasSnap ? qualified : null),
-      rateLabel: "Tx. Qualif.", rateValue: fmtPct(hasSnap ? qualRate : null),
-      hasData: hasSnap,
+      volume: fmtNum(qualified > 0 ? qualified : null),
+      rateLabel: "Tx. Qualif.", rateValue: fmtPct(leadsGen > 0 ? qualRate : null),
+      hasData: hasKpi,
     },
     {
       label: "REUNIÕES AGENDADAS",
-      costLabel: "Custo/Reun.", costValue: hasAds && meetingsBooked > 0 ? fmtBrl(adTotals.investment / meetingsBooked) : "—",
-      volume: fmtNum(hasSnap ? meetingsBooked : null),
-      rateLabel: "Tx. Agend.", rateValue: fmtPct(hasSnap && qualified > 0 ? schedulingRate : null),
-      hasData: hasSnap,
+      costLabel: "Custo/Reun.", costValue: hasAds && meetingsScheduled > 0 ? fmtBrl(adTotals.investment / meetingsScheduled) : "—",
+      volume: fmtNum(meetingsScheduled > 0 ? meetingsScheduled : null),
+      rateLabel: "Tx. Agend.", rateValue: fmtPct(qualified > 0 ? schedulingRate : null),
+      hasData: hasKpi,
     },
     {
       label: "REUNIÕES REALIZADAS",
-      costLabel: "Custo/Realiz.", costValue: hasAds && proposalsSent > 0 ? fmtBrl(adTotals.investment / proposalsSent) : "—",
-      volume: fmtNum(hasSnap ? proposalsSent : null),
-      rateLabel: "Show Rate", rateValue: fmtPct(hasSnap && meetingsBooked > 0 ? showRate : null),
-      hasData: hasSnap,
+      costLabel: "Custo/Realiz.", costValue: hasAds && meetingsCompleted > 0 ? fmtBrl(adTotals.investment / meetingsCompleted) : "—",
+      volume: fmtNum(meetingsCompleted > 0 ? meetingsCompleted : null),
+      rateLabel: "Show Rate", rateValue: fmtPct(meetingsScheduled > 0 ? showRate : null),
+      hasData: hasKpi,
     },
     {
       label: "VENDAS",
       costLabel: "CAC", costValue: hasAds && dealsClosed > 0 ? fmtBrl(adTotals.investment / dealsClosed) : "—",
-      volume: fmtNum(hasSnap ? dealsClosed : null),
-      rateLabel: "Close Rate", rateValue: fmtPct(hasSnap ? closeRate : null),
-      hasData: hasSnap,
+      volume: fmtNum(dealsClosed > 0 ? dealsClosed : null),
+      rateLabel: "Close Rate", rateValue: fmtPct(meetingsCompleted > 0 ? closeRate : null),
+      hasData: hasKpi,
     },
   ];
 
@@ -189,10 +221,24 @@ export default function FullFunnelPage() {
           <p className="text-muted-foreground">Visualização end-to-end: do investimento à venda</p>
         </div>
 
-        <TimePeriodSelector />
+        <div className="flex flex-wrap items-center gap-4">
+          <TimePeriodSelector />
+          {teamMembers.length > 0 && (
+            <Select value={sellerFilter} onValueChange={setSellerFilter}>
+              <SelectTrigger className="w-52">
+                <SelectValue placeholder="Filtrar vendedor" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os vendedores</SelectItem>
+                {teamMembers.map((tm) => (
+                  <SelectItem key={tm.id} value={tm.id}>{tm.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        </div>
 
         {/* Funnel Stages */}
-        {/* Mobile: vertical card stack; Desktop: trapezoid funnel */}
         <div className="flex flex-col items-center gap-0">
           {stages.map((stage, idx) => {
             const color = STAGE_COLORS[idx];
@@ -252,7 +298,7 @@ export default function FullFunnelPage() {
         </div>
 
         {/* Revenue highlight */}
-        {hasSnap && (
+        {(hasKpi || hasAds) && totalRevenue > 0 && (
           <Card className="bg-[#5B2333] text-white border-none">
             <CardContent className="py-6 text-center space-y-1">
               <p className="text-xs font-medium uppercase tracking-wider opacity-70">Faturamento</p>
