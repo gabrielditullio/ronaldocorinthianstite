@@ -43,9 +43,10 @@ import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 30_000,
+      staleTime: 60_000,
       refetchOnWindowFocus: false,
       retry: 1,
+      retryDelay: 5_000,
     },
   },
 });
