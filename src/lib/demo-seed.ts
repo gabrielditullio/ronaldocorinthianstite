@@ -303,6 +303,7 @@ export async function seedDemoData(
   await batchInsert("daily_seller_kpis", kpiRows);
 
   // ── Step 4: Ad Metrics (all 12 months) ──
+  await ensureSession();
   onStep(4);
   const adRows: any[] = [];
   for (const plan of MONTHLY_PLAN) {
