@@ -208,7 +208,10 @@ export default function TeamPage() {
                           <TableCell className="hidden md:table-cell text-muted-foreground">{m.phone || "—"}</TableCell>
                           <TableCell>
                             {m.role.toLowerCase() === "sdr" ?
-                        `${m.monthly_lead_goal ?? 0} leads` :
+                        <div className="space-y-0.5">
+                          <div>{m.monthly_lead_goal ?? 0} leads</div>
+                          <div className="text-xs text-muted-foreground">{(m as any).monthly_scheduling_goal ?? 0} agendamentos</div>
+                        </div> :
                         formatCurrency(m.monthly_revenue_goal ?? 0)}
                           </TableCell>
                           <TableCell>
