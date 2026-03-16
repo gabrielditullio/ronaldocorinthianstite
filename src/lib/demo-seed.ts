@@ -46,13 +46,27 @@ function distributeSales(totalSales: number, dailyMeetings: number[]): number[] 
   return sales;
 }
 
+/** Ensure session is still alive before heavy operations */
+async function ensureSession() {
+  const { data, error } = await supabase.auth.getSession();
+  if (error || !data.session) {
+    throw new Error("Sessão expirada. Faça login novamente e tente outra vez.");
+  }
+  return data.session;
+}
+
 async function batchInsert(table: string, rows: any[], batchSize = 500) {
   for (let i = 0; i < rows.length; i += batchSize) {
+    // Refresh session before each batch to prevent token expiry
+    if (i > 0 && i % 1500 === 0) {
+      await supabase.auth.refreshSession();
+      await new Promise(r => setTimeout(r, 500));
+    }
     const { error } = await (supabase as any).from(table).insert(rows.slice(i, i + batchSize));
     if (error) throw error;
-    // Small delay to avoid rate limiting (429) which can kill the session
+    // Delay to avoid rate limiting (429)
     if (i + batchSize < rows.length) {
-      await new Promise(r => setTimeout(r, 300));
+      await new Promise(r => setTimeout(r, 400));
     }
   }
 }
@@ -199,6 +213,7 @@ export async function seedDemoData(
   if (snapErr) throw snapErr;
 
   // ── Step 3: Daily Seller KPIs (all 12 months) ──
+  await ensureSession();
   onStep(3);
   const kpiRows: any[] = [];
 
@@ -288,6 +303,7 @@ export async function seedDemoData(
   await batchInsert("daily_seller_kpis", kpiRows);
 
   // ── Step 4: Ad Metrics (all 12 months) ──
+  await ensureSession();
   onStep(4);
   const adRows: any[] = [];
   for (const plan of MONTHLY_PLAN) {
@@ -360,6 +376,7 @@ export async function seedDemoData(
   if (cmErr) throw cmErr;
 
   // ── Step 6: Session Metrics (12 months) ──
+  await ensureSession();
   onStep(6);
   const sessionRows: any[] = [];
   for (let i = 0; i < MONTHLY_PLAN.length; i++) {
@@ -389,6 +406,7 @@ export async function seedDemoData(
   if (sessErr) throw sessErr;
 
   // ── Step 7: Goal Simulations ──
+  await ensureSession();
   onStep(7);
   const sims = [
     { user_id: userId, funnel_id: funnelId, target_revenue: 300000, avg_ticket: 9500, conversion_rate: 25, show_rate: 75, scheduling_rate: 30, qualification_rate: 52, working_days: 22, num_sellers: 6 },
@@ -398,6 +416,7 @@ export async function seedDemoData(
   if (simErr) throw simErr;
 
   // ── Step 8: Leads + Pipeline Meetings (200+ leads) ──
+  await ensureSession();
   onStep(8);
   const stages = ["lead", "qualification", "meeting", "proposal", "closed_won", "closed_lost"];
   const sources = ["traffic", "inbound", "referral", "outbound", "other"];
