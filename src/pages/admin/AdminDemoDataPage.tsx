@@ -27,7 +27,14 @@ export default function AdminDemoDataPage() {
     setCompletedSteps([]);
     setSeedDone(false);
     try {
-      await seedDemoData(user.id, (stepIdx) => {
+      // Validate session before starting
+      const { data: { session } } = await (await import("@/integrations/supabase/client")).supabase.auth.getSession();
+      if (!session?.user) {
+        toast({ title: "Sessão expirada", description: "Faça login novamente.", variant: "destructive" });
+        setRunning(false);
+        return;
+      }
+      await seedDemoData(session.user.id, (stepIdx) => {
         setCurrentStep(stepIdx);
         setCompletedSteps(prev => {
           const next = [...prev];
