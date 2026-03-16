@@ -117,6 +117,11 @@ export default function FullFunnelPage() {
     return sellerKpis.filter((k) => k.team_member_id === sellerFilter);
   }, [sellerKpis, sellerFilter]);
 
+  const filteredPrevKpis = useMemo(() => {
+    if (sellerFilter === "all") return prevSellerKpis;
+    return prevSellerKpis.filter((k) => k.team_member_id === sellerFilter);
+  }, [prevSellerKpis, sellerFilter]);
+
   // Aggregate KPIs
   const kpi = useMemo(() => {
     const a = { leads: 0, qualified: 0, scheduled: 0, completed: 0, sales: 0, revenue: 0 };
