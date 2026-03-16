@@ -59,7 +59,7 @@ export default function SellerKPIsPage() {
   // Fetch team members
   useEffect(() => {
     if (!user) return;
-    supabase.from("team_members").select("id, name, role").eq("user_id", user.id).eq("is_active", true)
+    supabase.from("team_members").select("id, name, role, monthly_scheduling_goal").eq("user_id", user.id).eq("is_active", true)
       .then(({ data }) => {
         if (data) {
           setTeamMembers(data);
