@@ -35,6 +35,7 @@ interface FormData {
   phone: string;
   monthly_lead_goal: number;
   monthly_revenue_goal: number;
+  monthly_scheduling_goal: number;
 }
 
 const defaultForm: FormData = {
@@ -43,7 +44,8 @@ const defaultForm: FormData = {
   email: "",
   phone: "",
   monthly_lead_goal: 25,
-  monthly_revenue_goal: 100000
+  monthly_revenue_goal: 100000,
+  monthly_scheduling_goal: 0
 };
 
 function formatCurrency(value: number): string {
