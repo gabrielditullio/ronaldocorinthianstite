@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, useRef, ReactNode } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -44,6 +44,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setProfile(data as unknown as Profile | null);
   };
 
+  // Throttle fetchProfile to avoid excessive requests
+  const lastFetchRef = useRef<number>(0);
+  const fetchProfileThrottled = async (userId: string) => {
+    const now = Date.now();
+    if (now - lastFetchRef.current < 2000) return;
+    lastFetchRef.current = now;
+    await fetchProfile(userId);
+  };
+
   const refreshProfile = async () => {
     if (user) {
       await fetchProfile(user.id);
@@ -51,23 +60,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    // 1. Get initial session
+    let mounted = true;
+
     supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!mounted) return;
       setSession(session);
       setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchProfile(session.user.id);
-      }
+      if (session?.user) fetchProfileThrottled(session.user.id);
       setLoading(false);
     });
 
-    // 2. Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        // IGNORE token refresh events that come with null session
-        // This prevents false logouts during network hiccups
-        if (event === 'TOKEN_REFRESHED' && !session) {
-          console.warn('Token refresh returned null session, ignoring');
+      (event, session) => {
+        if (!mounted) return;
+
+        // Ignore token refresh that returns null — network hiccup, not real logout
+        if (event === 'TOKEN_REFRESHED' && !session) return;
+
+        // On SIGNED_OUT, only clear state — do NOT call getSession() or fetchProfile
+        if (event === 'SIGNED_OUT') {
+          setSession(null);
+          setUser(null);
+          setProfile(null);
+          setLoading(false);
           return;
         }
 
@@ -75,17 +90,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(session?.user ?? null);
 
         if (session?.user) {
-          // Use setTimeout to avoid Supabase deadlock during auth callback
-          setTimeout(() => fetchProfile(session.user.id), 0);
-        } else if (event === 'SIGNED_OUT') {
-          // Only clear profile on EXPLICIT sign out, not on refresh failures
-          setProfile(null);
+          // Defer to avoid Supabase internal deadlock
+          setTimeout(() => {
+            if (mounted) fetchProfileThrottled(session.user.id);
+          }, 0);
         }
         setLoading(false);
       }
     );
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signIn = async (email: string, password: string) => {
