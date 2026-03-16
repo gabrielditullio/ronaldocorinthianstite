@@ -9,6 +9,8 @@ import { DashboardKPIs } from "@/components/dashboard/DashboardKPIs";
 import { FunnelChart } from "@/components/dashboard/FunnelChart";
 import { RevenueChart } from "@/components/dashboard/RevenueChart";
 import { DashboardAlerts } from "@/components/dashboard/DashboardAlerts";
+import { SellerSummaryTable } from "@/components/dashboard/SellerSummaryTable";
+import { DailyEvolutionChart } from "@/components/dashboard/DailyEvolutionChart";
 import OnboardingWizard from "@/components/OnboardingWizard";
 import { PageSkeleton, EmptyState } from "@/components/ui/page-states";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -219,6 +221,8 @@ export default function Dashboard() {
                 sellerKpis={filteredKpis}
               />
             </div>
+            <SellerSummaryTable sellerKpis={filteredKpis} teamMembers={teamMembers} />
+            <DailyEvolutionChart sellerKpis={filteredKpis} />
             <DashboardAlerts leads={leads} teamMembers={teamMembers} />
           </>
         )}
