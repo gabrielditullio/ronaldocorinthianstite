@@ -68,10 +68,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } else if (event === 'SIGNED_OUT') {
           // Defensive recovery: in rate-limit races, validate session once before clearing local auth state
           const { data: recovered } = await supabase.auth.getSession();
-          if (recovered?.session?.user) {
-            setSession(recovered.session);
-            setUser(recovered.session.user);
-            setTimeout(() => fetchProfile(recovered.session!.user.id), 0);
+          const recoveredSession = recovered?.session;
+          if (recoveredSession?.user) {
+            setSession(recoveredSession);
+            setUser(recoveredSession.user);
+            setTimeout(() => fetchProfile(recoveredSession.user.id), 0);
             profileFetched = true;
           } else {
             setProfile(null);
