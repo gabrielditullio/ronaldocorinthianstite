@@ -46,13 +46,27 @@ function distributeSales(totalSales: number, dailyMeetings: number[]): number[] 
   return sales;
 }
 
+/** Ensure session is still alive before heavy operations */
+async function ensureSession() {
+  const { data, error } = await supabase.auth.getSession();
+  if (error || !data.session) {
+    throw new Error("Sessão expirada. Faça login novamente e tente outra vez.");
+  }
+  return data.session;
+}
+
 async function batchInsert(table: string, rows: any[], batchSize = 500) {
   for (let i = 0; i < rows.length; i += batchSize) {
+    // Refresh session before each batch to prevent token expiry
+    if (i > 0 && i % 1500 === 0) {
+      await supabase.auth.refreshSession();
+      await new Promise(r => setTimeout(r, 500));
+    }
     const { error } = await (supabase as any).from(table).insert(rows.slice(i, i + batchSize));
     if (error) throw error;
-    // Small delay to avoid rate limiting (429) which can kill the session
+    // Delay to avoid rate limiting (429)
     if (i + batchSize < rows.length) {
-      await new Promise(r => setTimeout(r, 300));
+      await new Promise(r => setTimeout(r, 400));
     }
   }
 }
