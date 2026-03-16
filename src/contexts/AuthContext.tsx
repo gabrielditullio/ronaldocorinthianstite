@@ -52,29 +52,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let mounted = true;
-    let lastFetch = 0;
-
-    const throttledFetchProfile = async (userId: string) => {
-      const now = Date.now();
-      if (now - lastFetch < 3000) return;
-      lastFetch = now;
-
-      const { data } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", userId)
-        .single();
-
-      if (mounted) {
-        setProfile(data as unknown as Profile | null);
-      }
-    };
+    let profileFetchedForUser = '';
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!mounted) return;
       setSession(session);
       setUser(session?.user ?? null);
-      if (session?.user) void throttledFetchProfile(session.user.id);
+      if (session?.user && profileFetchedForUser !== session.user.id) {
+        profileFetchedForUser = session.user.id;
+        fetchProfile(session.user.id);
+      }
       setLoading(false);
     });
 
@@ -82,9 +69,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       (event, session) => {
         if (!mounted) return;
 
-        if (event === "TOKEN_REFRESHED" && !session) return;
+        if (!session && event === 'TOKEN_REFRESHED') return;
+        if (!session && event === 'INITIAL_SESSION') return;
 
-        if (event === "SIGNED_OUT") {
+        if (event === 'SIGNED_OUT') {
           setSession(null);
           setUser(null);
           setProfile(null);
@@ -95,9 +83,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(session);
         setUser(session?.user ?? null);
 
-        if (session?.user) {
+        if (session?.user && profileFetchedForUser !== session.user.id) {
+          profileFetchedForUser = session.user.id;
           setTimeout(() => {
-            if (mounted) void throttledFetchProfile(session.user.id);
+            if (mounted) fetchProfile(session.user.id);
           }, 100);
         }
 
