@@ -276,6 +276,7 @@ export type Database = {
           leads_qualified: number
           meetings_completed: number
           meetings_scheduled: number
+          net_revenue: number
           revenue: number
           sales: number
           sdr_team_member_id: string | null
@@ -291,6 +292,7 @@ export type Database = {
           leads_qualified?: number
           meetings_completed?: number
           meetings_scheduled?: number
+          net_revenue?: number
           revenue?: number
           sales?: number
           sdr_team_member_id?: string | null
@@ -306,6 +308,7 @@ export type Database = {
           leads_qualified?: number
           meetings_completed?: number
           meetings_scheduled?: number
+          net_revenue?: number
           revenue?: number
           sales?: number
           sdr_team_member_id?: string | null
