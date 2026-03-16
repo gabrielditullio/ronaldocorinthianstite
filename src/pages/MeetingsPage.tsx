@@ -249,8 +249,8 @@ export default function MeetingsPage() {
                 <Textarea value={editing.problems} onChange={(e) => updateField("problems", e.target.value)} rows={3} />
               </div>
               <div>
-                <Label>Limpeza de Pipeline — Leads para remover ou re-engajar?</Label>
-                <Textarea value={editing.pipelineCleanup} onChange={(e) => updateField("pipelineCleanup", e.target.value)} rows={3} />
+                <Label>Resoluções — Que soluções vamos aplicar a partir das vitórias e problemas identificados acima?</Label>
+                <Textarea value={editing.pipelineCleanup} onChange={(e) => updateField("pipelineCleanup", e.target.value)} rows={3} placeholder="Liste as soluções e ações práticas decididas..." />
               </div>
             </CardContent>
           </Card>
