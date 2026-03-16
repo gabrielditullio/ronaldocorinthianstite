@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Users, TrendingUp, Target, Calendar, Phone, DollarSign } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 import { MoMIndicator } from "@/components/MoMIndicator";
 import { useTimePeriod, toLocalDateString } from "@/contexts/TimePeriodContext";
 
