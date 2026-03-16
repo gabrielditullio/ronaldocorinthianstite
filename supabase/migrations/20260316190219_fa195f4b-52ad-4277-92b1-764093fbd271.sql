@@ -1,0 +1,1 @@
+ALTER TABLE daily_seller_kpis ADD COLUMN IF NOT EXISTS net_revenue numeric NOT NULL DEFAULT 0;

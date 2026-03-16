@@ -34,7 +34,6 @@ export default function Dashboard() {
   const startDateStr = toLocalDateString(timePeriod.startDate);
   const endDateStr = toLocalDateString(timePeriod.endDate);
 
-  // Previous period for MoM comparison
   const diffMs = timePeriod.endDate.getTime() - timePeriod.startDate.getTime();
   const prevEnd = new Date(timePeriod.startDate.getTime() - 1);
   const prevStart = new Date(prevEnd.getTime() - diffMs);
@@ -64,47 +63,33 @@ export default function Dashboard() {
   const { data: snapshots = [] } = useQuery({
     queryKey: ["dashboard-snapshots"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("monthly_snapshots")
-        .select("*")
-        .order("month_year", { ascending: true });
+      const { data, error } = await supabase.from("monthly_snapshots").select("*").order("month_year", { ascending: true });
       if (error) throw error;
       return data;
     },
     enabled: !!user,
   });
 
-  // ── Fetch daily_seller_kpis for current period ──
   const { data: sellerKpis = [], isLoading: loadingKpis } = useQuery({
     queryKey: ["dashboard-seller-kpis", startDateStr, endDateStr],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("daily_seller_kpis")
-        .select("*")
-        .gte("date", startDateStr)
-        .lte("date", endDateStr);
+      const { data, error } = await supabase.from("daily_seller_kpis").select("*").gte("date", startDateStr).lte("date", endDateStr);
       if (error) throw error;
       return data;
     },
     enabled: !!user,
   });
 
-  // ── Fetch daily_seller_kpis for previous period (MoM) ──
   const { data: prevSellerKpis = [] } = useQuery({
     queryKey: ["dashboard-seller-kpis-prev", prevStartStr, prevEndStr],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("daily_seller_kpis")
-        .select("*")
-        .gte("date", prevStartStr)
-        .lte("date", prevEndStr);
+      const { data, error } = await supabase.from("daily_seller_kpis").select("*").gte("date", prevStartStr).lte("date", prevEndStr);
       if (error) throw error;
       return data;
     },
     enabled: !!user,
   });
 
-  // ── Filter KPIs by selected seller ──
   const filteredKpis = useMemo(() => {
     if (sellerFilter === "all") return sellerKpis;
     return sellerKpis.filter((k) => k.team_member_id === sellerFilter);
@@ -115,9 +100,8 @@ export default function Dashboard() {
     return prevSellerKpis.filter((k) => k.team_member_id === sellerFilter);
   }, [prevSellerKpis, sellerFilter]);
 
-  // ── Aggregate KPIs ──
   const kpiAgg = useMemo(() => {
-    const agg = { leads: 0, qualified: 0, scheduled: 0, completed: 0, sales: 0, revenue: 0 };
+    const agg = { leads: 0, qualified: 0, scheduled: 0, completed: 0, sales: 0, revenue: 0, net_revenue: 0 };
     filteredKpis.forEach((k) => {
       agg.leads += k.leads_generated ?? 0;
       agg.qualified += k.leads_qualified ?? 0;
@@ -125,12 +109,13 @@ export default function Dashboard() {
       agg.completed += k.meetings_completed ?? 0;
       agg.sales += k.sales ?? 0;
       agg.revenue += Number(k.revenue) || 0;
+      agg.net_revenue += Number(k.net_revenue) || 0;
     });
     return agg;
   }, [filteredKpis]);
 
   const prevKpiAgg = useMemo(() => {
-    const agg = { leads: 0, qualified: 0, scheduled: 0, completed: 0, sales: 0, revenue: 0 };
+    const agg = { leads: 0, qualified: 0, scheduled: 0, completed: 0, sales: 0, revenue: 0, net_revenue: 0 };
     filteredPrevKpis.forEach((k) => {
       agg.leads += k.leads_generated ?? 0;
       agg.qualified += k.leads_qualified ?? 0;
@@ -138,6 +123,7 @@ export default function Dashboard() {
       agg.completed += k.meetings_completed ?? 0;
       agg.sales += k.sales ?? 0;
       agg.revenue += Number(k.revenue) || 0;
+      agg.net_revenue += Number(k.net_revenue) || 0;
     });
     return agg;
   }, [filteredPrevKpis]);
@@ -145,18 +131,12 @@ export default function Dashboard() {
   const loading = loadingLeads || loadingTeam || loadingKpis;
   const hasData = leads.length > 0 || sellerKpis.length > 0;
 
-  const showOnboarding =
-    !loading &&
-    !onboardingDismissed &&
-    profile?.subscription_status === "active" &&
-    !hasData &&
-    teamMembers.length === 0;
+  const showOnboarding = !loading && !onboardingDismissed && profile?.subscription_status === "active" && !hasData && teamMembers.length === 0;
 
   if (showOnboarding) {
     return <OnboardingWizard onComplete={() => setOnboardingDismissed(true)} />;
   }
 
-  // Determine subtitle based on KPI data
   const getSubtitle = () => {
     if (!hasData) return "Comece o dia analisando seus números. Dados são o melhor café da manhã. ☕";
     if (kpiAgg.revenue >= 100000) return "Sua equipe está acima da meta este mês. Continue assim! 🚀";
@@ -168,9 +148,7 @@ export default function Dashboard() {
     <DashboardLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-bold">
-            {getGreeting()}, {profile?.full_name?.split(" ")[0] || "Gestor"}! 👋
-          </h1>
+          <h1 className="text-2xl font-bold">{getGreeting()}, {profile?.full_name?.split(" ")[0] || "Gestor"}! 👋</h1>
           <p className="text-base text-muted-foreground">{getSubtitle()}</p>
         </div>
 
@@ -178,15 +156,11 @@ export default function Dashboard() {
           <TimePeriodSelector />
           {teamMembers.length > 0 && (
             <Select value={sellerFilter} onValueChange={setSellerFilter}>
-              <SelectTrigger className="w-52">
-                <SelectValue placeholder="Filtrar vendedor" />
-              </SelectTrigger>
+              <SelectTrigger className="w-52"><SelectValue placeholder="Filtrar vendedor" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos os vendedores</SelectItem>
                 {teamMembers.map((tm) => (
-                  <SelectItem key={tm.id} value={tm.id}>
-                    {tm.name}
-                  </SelectItem>
+                  <SelectItem key={tm.id} value={tm.id}>{tm.name}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -196,30 +170,13 @@ export default function Dashboard() {
         {loading ? (
           <PageSkeleton />
         ) : !hasData ? (
-          <EmptyState
-            icon={Filter}
-            title="Seu painel está esperando por dados"
-            description="Adicione leads no Funil ou preencha KPIs de vendedores para ver suas métricas."
-            actionLabel="Ir para KPIs"
-            actionTo="/kpis-vendedores"
-          />
+          <EmptyState icon={Filter} title="Seu painel está esperando por dados" description="Adicione leads no Funil ou preencha KPIs de vendedores para ver suas métricas." actionLabel="Ir para KPIs" actionTo="/kpis-vendedores" />
         ) : (
           <>
-            <DashboardKPIs
-              leads={leads}
-              snapshots={snapshots}
-              timePeriod={timePeriod}
-              kpiAgg={kpiAgg}
-              prevKpiAgg={prevKpiAgg}
-            />
+            <DashboardKPIs leads={leads} snapshots={snapshots} timePeriod={timePeriod} kpiAgg={kpiAgg} prevKpiAgg={prevKpiAgg} />
             <div className="grid gap-4 lg:grid-cols-2">
               <FunnelChart leads={leads} />
-              <RevenueChart
-                snapshots={snapshots}
-                leads={leads}
-                timePeriod={timePeriod}
-                sellerKpis={filteredKpis}
-              />
+              <RevenueChart snapshots={snapshots} leads={leads} timePeriod={timePeriod} sellerKpis={filteredKpis} />
             </div>
             <SellerSummaryTable sellerKpis={filteredKpis} teamMembers={teamMembers} />
             <DailyEvolutionChart sellerKpis={filteredKpis} />
