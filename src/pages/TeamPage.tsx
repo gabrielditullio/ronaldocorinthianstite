@@ -128,7 +128,8 @@ export default function TeamPage() {
       email: m.email || "",
       phone: m.phone || "",
       monthly_lead_goal: m.monthly_lead_goal ?? 25,
-      monthly_revenue_goal: m.monthly_revenue_goal ?? 100000
+      monthly_revenue_goal: m.monthly_revenue_goal ?? 100000,
+      monthly_scheduling_goal: (m as any).monthly_scheduling_goal ?? 0
     });
     setEditingId(m.id);
     setOpen(true);
