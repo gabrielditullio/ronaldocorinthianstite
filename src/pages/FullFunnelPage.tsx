@@ -7,7 +7,7 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import { TimePeriodSelector } from "@/components/TimePeriodSelector";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowDown } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowDownIcon } from "lucide-react";
 import { FunnelTimingSection } from "@/components/funnel/FunnelTimingSection";
 
 function fmtBrl(v: number | null) {
