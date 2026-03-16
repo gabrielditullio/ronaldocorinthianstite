@@ -80,6 +80,23 @@ export default function FullFunnelPage() {
     enabled: !!user,
   });
 
+  // Previous period KPIs
+  const prevStartStr = prevStartDate ? toLocalDateString(prevStartDate) : "";
+  const prevEndStr = prevEndDate ? toLocalDateString(prevEndDate) : "";
+
+  const { data: prevSellerKpis = [] } = useQuery({
+    queryKey: ["fullfunnel-kpis-prev", prevStartStr, prevEndStr],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("daily_seller_kpis")
+        .select("*")
+        .gte("date", prevStartStr)
+        .lte("date", prevEndStr);
+      return data || [];
+    },
+    enabled: !!user && compareEnabled && !!prevStartDate,
+  });
+
   // Ad metrics
   const { data: adMetrics = [] } = useQuery({
     queryKey: ["fullfunnel-ad", startDateStr, endDateStr],
