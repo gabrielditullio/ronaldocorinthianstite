@@ -44,15 +44,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setProfile(data as unknown as Profile | null);
   };
 
-  // Throttle fetchProfile to avoid excessive requests
-  const lastFetchRef = useRef<number>(0);
-  const fetchProfileThrottled = async (userId: string) => {
-    const now = Date.now();
-    if (now - lastFetchRef.current < 2000) return;
-    lastFetchRef.current = now;
-    await fetchProfile(userId);
-  };
-
   const refreshProfile = async () => {
     if (user) {
       await fetchProfile(user.id);
@@ -61,12 +52,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let mounted = true;
+    let lastFetch = 0;
+
+    const throttledFetchProfile = async (userId: string) => {
+      const now = Date.now();
+      if (now - lastFetch < 3000) return;
+      lastFetch = now;
+
+      const { data } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", userId)
+        .single();
+
+      if (mounted) {
+        setProfile(data as unknown as Profile | null);
+      }
+    };
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!mounted) return;
       setSession(session);
       setUser(session?.user ?? null);
-      if (session?.user) fetchProfileThrottled(session.user.id);
+      if (session?.user) void throttledFetchProfile(session.user.id);
       setLoading(false);
     });
 
@@ -74,11 +82,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       (event, session) => {
         if (!mounted) return;
 
-        // Ignore token refresh that returns null — network hiccup, not real logout
-        if (event === 'TOKEN_REFRESHED' && !session) return;
+        if (event === "TOKEN_REFRESHED" && !session) return;
 
-        // On SIGNED_OUT, only clear state — do NOT call getSession() or fetchProfile
-        if (event === 'SIGNED_OUT') {
+        if (event === "SIGNED_OUT") {
           setSession(null);
           setUser(null);
           setProfile(null);
@@ -90,11 +96,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(session?.user ?? null);
 
         if (session?.user) {
-          // Defer to avoid Supabase internal deadlock
           setTimeout(() => {
-            if (mounted) fetchProfileThrottled(session.user.id);
-          }, 0);
+            if (mounted) void throttledFetchProfile(session.user.id);
+          }, 100);
         }
+
         setLoading(false);
       }
     );
