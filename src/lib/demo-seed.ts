@@ -376,6 +376,7 @@ export async function seedDemoData(
   if (cmErr) throw cmErr;
 
   // ── Step 6: Session Metrics (12 months) ──
+  await ensureSession();
   onStep(6);
   const sessionRows: any[] = [];
   for (let i = 0; i < MONTHLY_PLAN.length; i++) {
