@@ -173,7 +173,7 @@ export default function Dashboard() {
           <EmptyState icon={Filter} title="Seu painel está esperando por dados" description="Adicione leads no Funil ou preencha KPIs de vendedores para ver suas métricas." actionLabel="Ir para KPIs" actionTo="/kpis-vendedores" />
         ) : (
           <>
-            <DashboardKPIs leads={leads} snapshots={snapshots} timePeriod={timePeriod} kpiAgg={kpiAgg} prevKpiAgg={prevKpiAgg} />
+            <DashboardKPIs leads={leads} snapshots={snapshots} timePeriod={timePeriod} kpiAgg={kpiAgg} prevKpiAgg={prevKpiAgg} compareEnabled={timePeriod.compareEnabled} />
             <div className="grid gap-4 lg:grid-cols-2">
               <FunnelChart leads={leads} />
               <RevenueChart snapshots={snapshots} leads={leads} timePeriod={timePeriod} sellerKpis={filteredKpis} />

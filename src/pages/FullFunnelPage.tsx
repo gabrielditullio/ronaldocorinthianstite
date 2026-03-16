@@ -136,6 +136,20 @@ export default function FullFunnelPage() {
     return a;
   }, [filteredKpis]);
 
+  const prevKpi = useMemo(() => {
+    if (!compareEnabled) return null;
+    const a = { leads: 0, qualified: 0, scheduled: 0, completed: 0, sales: 0, revenue: 0 };
+    filteredPrevKpis.forEach((k) => {
+      a.leads += k.leads_generated ?? 0;
+      a.qualified += k.leads_qualified ?? 0;
+      a.scheduled += k.meetings_scheduled ?? 0;
+      a.completed += k.meetings_completed ?? 0;
+      a.sales += k.sales ?? 0;
+      a.revenue += Number(k.revenue) || 0;
+    });
+    return a;
+  }, [filteredPrevKpis, compareEnabled]);
+
   const hasKpi = kpi.leads > 0 || kpi.sales > 0 || kpi.scheduled > 0;
 
   // Ad totals
