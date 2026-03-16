@@ -20,6 +20,7 @@ interface TeamMember {
   id: string;
   name: string;
   role: string;
+  monthly_scheduling_goal?: number;
 }
 
 interface DayRow {
