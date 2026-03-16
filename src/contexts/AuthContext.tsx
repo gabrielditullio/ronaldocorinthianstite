@@ -36,19 +36,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const fetchProfile = async (userId: string) => {
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from("profiles")
       .select("*")
       .eq("id", userId)
       .single();
-    const profile = data as unknown as Profile | null;
-    console.log('[DEBUG AUTH] User ID:', userId);
-    console.log('[DEBUG AUTH] Profile query result:', profile);
-    console.log('[DEBUG AUTH] Profile query error:', error);
-    console.log('[DEBUG AUTH] Role value:', profile?.role);
-    console.log('[DEBUG AUTH] is_admin value:', profile?.is_admin);
-    console.log('[DEBUG AUTH] Type of role:', typeof profile?.role);
-    setProfile(profile);
     setProfile(data as unknown as Profile | null);
   };
 
@@ -59,24 +51,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
+    let profileFetched = false;
+
+    // Set up listener FIRST (Supabase best practice)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
+      async (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
-        if (session?.user) {
-          setTimeout(() => fetchProfile(session.user.id), 0);
-        } else {
+
+        // Only fetch profile on meaningful auth events, not token refreshes
+        if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
+          if (session?.user) {
+            setTimeout(() => fetchProfile(session.user.id), 0);
+            profileFetched = true;
+          }
+        } else if (event === 'SIGNED_OUT') {
           setProfile(null);
+          profileFetched = false;
         }
         setLoading(false);
       }
     );
 
+    // Then get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
-      if (session?.user) {
+      if (session?.user && !profileFetched) {
         fetchProfile(session.user.id);
+        profileFetched = true;
       }
       setLoading(false);
     });
