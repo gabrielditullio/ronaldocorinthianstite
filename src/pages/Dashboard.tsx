@@ -87,7 +87,7 @@ export default function Dashboard() {
       if (error) throw error;
       return data;
     },
-    enabled: !!user,
+    enabled: !!user && timePeriod.compareEnabled,
   });
 
   const filteredKpis = useMemo(() => {
