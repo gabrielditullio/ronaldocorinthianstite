@@ -88,7 +88,9 @@ export default function SellerKPIsPage() {
     ]).then(([{ data }, { data: prevData }]) => {
       const mapped: Record<number, DayRow> = {};
       data?.forEach((r: any) => {
-        const d = new Date(r.date).getDate();
+        // Parse date string directly to avoid timezone issues (date is "YYYY-MM-DD")
+        const parts = (r.date as string).split("-");
+        const d = parseInt(parts[2], 10);
         mapped[d] = {
           day: d,
           leads_generated: r.leads_generated ?? 0,

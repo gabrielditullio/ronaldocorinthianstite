@@ -1,0 +1,1 @@
+ALTER TABLE daily_seller_kpis ADD CONSTRAINT daily_seller_kpis_user_member_date_unique UNIQUE (user_id, team_member_id, date);
