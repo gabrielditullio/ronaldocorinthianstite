@@ -35,6 +35,7 @@ interface FormData {
   phone: string;
   monthly_lead_goal: number;
   monthly_revenue_goal: number;
+  monthly_scheduling_goal: number;
 }
 
 const defaultForm: FormData = {
@@ -43,7 +44,8 @@ const defaultForm: FormData = {
   email: "",
   phone: "",
   monthly_lead_goal: 25,
-  monthly_revenue_goal: 100000
+  monthly_revenue_goal: 100000,
+  monthly_scheduling_goal: 0
 };
 
 function formatCurrency(value: number): string {
@@ -85,6 +87,7 @@ export default function TeamPage() {
         phone: data.phone.trim() || null,
         monthly_lead_goal: data.monthly_lead_goal,
         monthly_revenue_goal: data.monthly_revenue_goal,
+        monthly_scheduling_goal: data.monthly_scheduling_goal,
         user_id: user!.id
       };
       if (data.id) {
@@ -125,7 +128,8 @@ export default function TeamPage() {
       email: m.email || "",
       phone: m.phone || "",
       monthly_lead_goal: m.monthly_lead_goal ?? 25,
-      monthly_revenue_goal: m.monthly_revenue_goal ?? 100000
+      monthly_revenue_goal: m.monthly_revenue_goal ?? 100000,
+      monthly_scheduling_goal: (m as any).monthly_scheduling_goal ?? 0
     });
     setEditingId(m.id);
     setOpen(true);
@@ -204,7 +208,10 @@ export default function TeamPage() {
                           <TableCell className="hidden md:table-cell text-muted-foreground">{m.phone || "—"}</TableCell>
                           <TableCell>
                             {m.role.toLowerCase() === "sdr" ?
-                        `${m.monthly_lead_goal ?? 0} leads` :
+                        <div className="space-y-0.5">
+                          <div>{m.monthly_lead_goal ?? 0} leads</div>
+                          <div className="text-xs text-muted-foreground">{(m as any).monthly_scheduling_goal ?? 0} agendamentos</div>
+                        </div> :
                         formatCurrency(m.monthly_revenue_goal ?? 0)}
                           </TableCell>
                           <TableCell>
@@ -264,9 +271,15 @@ export default function TeamPage() {
                 </div>
               </div>
               {form.role === "sdr" ?
-              <div className="space-y-2">
-                  <Label htmlFor="leadGoal">Meta mensal de leads</Label>
-                  <Input id="leadGoal" type="number" min={0} value={form.monthly_lead_goal} onChange={(e) => setForm({ ...form, monthly_lead_goal: Number(e.target.value) || 0 })} />
+              <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="leadGoal">Meta mensal de leads</Label>
+                    <Input id="leadGoal" type="number" min={0} value={form.monthly_lead_goal} onChange={(e) => setForm({ ...form, monthly_lead_goal: Number(e.target.value) || 0 })} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="schedulingGoal">Meta mensal de agendamento</Label>
+                    <Input id="schedulingGoal" type="number" min={0} value={form.monthly_scheduling_goal} onChange={(e) => setForm({ ...form, monthly_scheduling_goal: Number(e.target.value) || 0 })} />
+                  </div>
                 </div> :
 
               <div className="space-y-2">

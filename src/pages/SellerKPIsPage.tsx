@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Users, TrendingUp, Target, Calendar, Phone, DollarSign } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 import { MoMIndicator } from "@/components/MoMIndicator";
 import { useTimePeriod, toLocalDateString } from "@/contexts/TimePeriodContext";
 
@@ -20,6 +21,7 @@ interface TeamMember {
   id: string;
   name: string;
   role: string;
+  monthly_scheduling_goal?: number;
 }
 
 interface DayRow {
@@ -57,7 +59,7 @@ export default function SellerKPIsPage() {
   // Fetch team members
   useEffect(() => {
     if (!user) return;
-    supabase.from("team_members").select("id, name, role").eq("user_id", user.id).eq("is_active", true)
+    supabase.from("team_members").select("id, name, role, monthly_scheduling_goal").eq("user_id", user.id).eq("is_active", true)
       .then(({ data }) => {
         if (data) {
           setTeamMembers(data);
@@ -236,7 +238,7 @@ export default function SellerKPIsPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2"><Users className="h-4 w-4" />Leads Gerados</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold">{totals.leads_generated}</p>{compareEnabled && <div className="mt-1"><MoMIndicator current={totals.leads_generated} previous={prevTotals?.leads ?? null} format={v => String(v)} /></div>}</CardContent></Card>
           <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2"><Target className="h-4 w-4" />Qualificação</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold">{totals.leads_qualified}</p><p className="text-xs text-muted-foreground">Taxa: {sdrQualRate.toFixed(1)}%</p>{compareEnabled && <div className="mt-1"><MoMIndicator current={totals.leads_qualified} previous={prevTotals?.qualified ?? null} format={v => String(v)} /></div>}</CardContent></Card>
-          <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2"><Calendar className="h-4 w-4" />Agendamento</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold">{totals.meetings_scheduled}</p><p className="text-xs text-muted-foreground">Taxa: {sdrSchedulingRate.toFixed(1)}%</p>{compareEnabled && <div className="mt-1"><MoMIndicator current={totals.meetings_scheduled} previous={prevTotals?.meetings_scheduled ?? null} format={v => String(v)} /></div>}</CardContent></Card>
+          <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2"><Calendar className="h-4 w-4" />Agendamento</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold">{selectedMember?.monthly_scheduling_goal ? `${totals.meetings_scheduled} / ${selectedMember.monthly_scheduling_goal}` : totals.meetings_scheduled}</p>{selectedMember?.monthly_scheduling_goal ? <Progress value={Math.min((totals.meetings_scheduled / selectedMember.monthly_scheduling_goal) * 100, 100)} className="h-2 mt-2" /> : null}<p className="text-xs text-muted-foreground mt-1">Taxa: {sdrSchedulingRate.toFixed(1)}%</p>{compareEnabled && <div className="mt-1"><MoMIndicator current={totals.meetings_scheduled} previous={prevTotals?.meetings_scheduled ?? null} format={v => String(v)} /></div>}</CardContent></Card>
           <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2"><Phone className="h-4 w-4" />Show Rate</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold">{sdrShowRate.toFixed(1)}%</p><p className="text-xs text-muted-foreground">{totals.meetings_completed}/{totals.meetings_scheduled} reuniões</p></CardContent></Card>
         </div>
       );
