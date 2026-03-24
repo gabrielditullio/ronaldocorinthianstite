@@ -16,7 +16,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "@/components/ui/sonner";
-import { Users, UserCheck, UserX, Search, ChevronLeft, ChevronRight, ArrowUpDown } from "lucide-react";
+import { Users, UserCheck, UserX, Search, ChevronLeft, ChevronRight, ArrowUpDown, KeyRound } from "lucide-react";
 
 type SortKey = "email" | "full_name" | "company_name" | "subscription_status" | "created_at";
 
