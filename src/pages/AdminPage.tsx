@@ -174,7 +174,7 @@ export default function AdminPage() {
                       <TableCell className="text-xs">
                         {u.created_at ? new Date(u.created_at).toLocaleDateString("pt-BR") : "—"}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="space-x-1">
                         {u.subscription_status === "active" ? (
                           <Button size="sm" variant="outline" onClick={() => setConfirmAction({ userId: u.id, action: "deactivate" })}>
                             Desativar
@@ -184,6 +184,23 @@ export default function AdminPage() {
                             Ativar
                           </Button>
                         )}
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          title="Enviar reset de senha"
+                          onClick={async () => {
+                            const { error } = await supabase.auth.resetPasswordForEmail(u.email, {
+                              redirectTo: `${window.location.origin}/reset-password`,
+                            });
+                            if (error) {
+                              toast.error("Erro ao enviar email de reset.");
+                            } else {
+                              toast.success(`Email de reset enviado para ${u.email}`);
+                            }
+                          }}
+                        >
+                          <KeyRound className="h-4 w-4" />
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))
