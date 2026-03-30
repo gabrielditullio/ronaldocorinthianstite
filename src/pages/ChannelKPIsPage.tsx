@@ -328,4 +328,3 @@ export default function ChannelKPIsPage() {
   );
 }
 
-import React from "react";
