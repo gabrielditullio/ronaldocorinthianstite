@@ -39,14 +39,21 @@ interface WeeklyKPI {
 }
 
 const KPI_ROWS = [
-  { key: "leads_total", label: "Total de Leads no Funil", isPercent: false },
-  { key: "leads_qualified", label: "Leads Qualificados", isPercent: false },
-  { key: "calls_scheduled", label: "Calls Agendadas", isPercent: false },
-  { key: "calls_completed", label: "Calls Realizadas", isPercent: false },
-  { key: "attendance_rate", label: "Taxa de Presença", isPercent: true },
-  { key: "sales", label: "Vendas", isPercent: false },
-  { key: "conversion_rate", label: "Taxa de Conversão", isPercent: true },
+  { key: "leads_total", label: "Total de Leads no Funil", isPercent: false, computed: false },
+  { key: "leads_qualified", label: "Leads Qualificados", isPercent: false, computed: false },
+  { key: "calls_scheduled", label: "Calls Agendadas", isPercent: false, computed: false },
+  { key: "calls_completed", label: "Calls Realizadas", isPercent: false, computed: false },
+  { key: "attendance_rate", label: "Taxa de Presença", isPercent: true, computed: true },
+  { key: "sales", label: "Vendas", isPercent: false, computed: false },
+  { key: "conversion_rate", label: "Taxa de Conversão", isPercent: true, computed: true },
 ] as const;
+
+function calcAttendanceRate(w: WeeklyKPI): number {
+  return w.calls_scheduled > 0 ? Math.round((w.calls_completed / w.calls_scheduled) * 1000) / 10 : 0;
+}
+function calcConversionRate(w: WeeklyKPI): number {
+  return w.calls_completed > 0 ? Math.round((w.sales / w.calls_completed) * 1000) / 10 : 0;
+}
 
 type KPIKey = typeof KPI_ROWS[number]["key"];
 
