@@ -14,7 +14,6 @@ function getWorkingDays(year: number, month: number): number[] {
   return days;
 }
 
-/** Distribute `total` into `n` buckets with natural variance, summing exactly to total */
 function distributeTotal(total: number, n: number): number[] {
   if (n === 0) return [];
   const raw = Array.from({ length: n }, () => rand(0.6, 1.4));
@@ -25,12 +24,10 @@ function distributeTotal(total: number, n: number): number[] {
   return scaled;
 }
 
-/** Place `totalSales` sales across days, ensuring sales[i] <= meetings[i] */
 function distributeSales(totalSales: number, dailyMeetings: number[]): number[] {
   const sales = new Array(dailyMeetings.length).fill(0);
   const pool: number[] = [];
   dailyMeetings.forEach((m, i) => { for (let j = 0; j < m; j++) pool.push(i); });
-  // Shuffle pool
   for (let i = pool.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [pool[i], pool[j]] = [pool[j], pool[i]];
@@ -46,7 +43,6 @@ function distributeSales(totalSales: number, dailyMeetings: number[]): number[] 
   return sales;
 }
 
-/** Ensure session is still alive before heavy operations (without forced token refresh). */
 async function ensureSession() {
   const { data, error } = await supabase.auth.getSession();
   if (error || !data.session) {
@@ -59,36 +55,20 @@ const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 async function batchInsert(table: string, rows: any[], batchSize = 250) {
   const maxRetries = 4;
-
   for (let i = 0; i < rows.length; i += batchSize) {
-    // Validate local session periodically without hitting /token refresh endpoint
-    if (i > 0 && i % 1000 === 0) {
-      await ensureSession();
-    }
-
+    if (i > 0 && i % 1000 === 0) await ensureSession();
     const chunk = rows.slice(i, i + batchSize);
     let attempt = 0;
-
     while (true) {
       const { error } = await (supabase as any).from(table).insert(chunk);
-
       if (!error) break;
-
       const msg = `${error.message ?? ""} ${error.details ?? ""}`.toLowerCase();
       const isRateLimitError = msg.includes("429") || msg.includes("rate limit") || msg.includes("too many requests");
-
-      if (!isRateLimitError || attempt >= maxRetries) {
-        throw error;
-      }
-
+      if (!isRateLimitError || attempt >= maxRetries) throw error;
       attempt += 1;
       await sleep(500 * attempt);
     }
-
-    // Small pacing between batches to keep API stable
-    if (i + batchSize < rows.length) {
-      await sleep(700);
-    }
+    if (i + batchSize < rows.length) await sleep(700);
   }
 }
 
@@ -109,34 +89,28 @@ const BRAZILIAN_LAST = ["Silva","Santos","Oliveira","Souza","Pereira","Lima","Co
 interface SellerProfile {
   name: string;
   role: "sdr" | "closer";
-  startMonth: string; // YYYY-MM, active from this month onward
-  // SDR fields
+  startMonth: string;
   avgLeadsPerDay?: number;
-  // Closer fields
   avgMeetingsPerDay?: number;
   closeRate?: number;
 }
 
 const SELLER_PROFILES: SellerProfile[] = [
-  // SDRs
   { name: "Thiago Almeida",   role: "sdr", startMonth: "2025-03", avgLeadsPerDay: 14 },
   { name: "Bruna Costa",      role: "sdr", startMonth: "2025-03", avgLeadsPerDay: 12 },
   { name: "Felipe Nascimento",role: "sdr", startMonth: "2025-03", avgLeadsPerDay: 10 },
   { name: "Amanda Rocha",     role: "sdr", startMonth: "2025-03", avgLeadsPerDay: 9 },
   { name: "Diego Martins",    role: "sdr", startMonth: "2025-03", avgLeadsPerDay: 8 },
-  { name: "Larissa Pereira",  role: "sdr", startMonth: "2025-09", avgLeadsPerDay: 7 }, // joined later
-  // Closers
+  { name: "Larissa Pereira",  role: "sdr", startMonth: "2025-09", avgLeadsPerDay: 7 },
   { name: "Isídio Carvalho",  role: "closer", startMonth: "2025-03", avgMeetingsPerDay: 4, closeRate: 0.35 },
   { name: "Gustavo Mendes",   role: "closer", startMonth: "2025-03", avgMeetingsPerDay: 3.5, closeRate: 0.30 },
   { name: "Leonardo Ribeiro", role: "closer", startMonth: "2025-03", avgMeetingsPerDay: 3, closeRate: 0.25 },
   { name: "Camila Ferreira",  role: "closer", startMonth: "2025-03", avgMeetingsPerDay: 3, closeRate: 0.28 },
   { name: "Rafael Oliveira",  role: "closer", startMonth: "2025-03", avgMeetingsPerDay: 2.5, closeRate: 0.22 },
-  { name: "Juliana Santos",   role: "closer", startMonth: "2025-08", avgMeetingsPerDay: 2, closeRate: 0.20 }, // joined later
+  { name: "Juliana Santos",   role: "closer", startMonth: "2025-08", avgMeetingsPerDay: 2, closeRate: 0.20 },
 ];
 
-// ─── Monthly Plan (12 months, Mar 2025 – Feb 2026) ──────────────────────────
-// All derived values are pre-calculated to guarantee mathematical consistency.
-// close_rate = sales / comp, qual_rate = qual / leads, etc.
+// ─── Monthly Plan ───────────────────────────────────────────────────────────
 interface MonthPlan {
   my: string;
   leads: number;
@@ -146,7 +120,6 @@ interface MonthPlan {
   sales: number;
   ticket: number;
   collectRate: number;
-  leadsPerMonth?: number; // for lead entity generation
 }
 
 const MONTHLY_PLAN: MonthPlan[] = [
@@ -164,7 +137,6 @@ const MONTHLY_PLAN: MonthPlan[] = [
   { my: "2026-02", leads: 490, qual: 255, sched: 184, comp: 134, sales: 34, ticket: 10000, collectRate: 0.90 },
 ];
 
-// Lead entities per month (total ~210)
 const LEADS_PER_MONTH = [10, 10, 11, 12, 14, 16, 17, 18, 20, 22, 24, 25];
 
 // ─── SEED STEPS ─────────────────────────────────────────────────────────────
@@ -174,11 +146,12 @@ export const SEED_STEPS: string[] = [
   "Gerando snapshots mensais (12 meses)...",
   "Preenchendo KPIs diários (12 meses, todos vendedores)...",
   "Adicionando métricas de tráfego pago...",
-  "Configurando canais de venda...",
+  "Configurando canais de venda + KPIs semanais...",
   "Criando métricas de sessão...",
   "Configurando simulações de meta...",
   "Populando leads e pipeline (200+ leads)...",
   "Gerando transições de estágio...",
+  "Populando diagnósticos e CAC...",
 ];
 
 // ─── MAIN SEED FUNCTION ─────────────────────────────────────────────────────
@@ -186,13 +159,11 @@ export async function seedDemoData(
   userId: string,
   onStep: (stepIndex: number) => void
 ) {
-  // Validate session is alive before starting
   const session = await ensureSession();
   if (session.user.id !== userId) {
     throw new Error("Sessão não corresponde ao usuário. Faça login novamente.");
   }
 
-  // Try to find user's default funnel
   let funnelId: string | null = null;
   const { data: funnels } = await supabase.from("funnels").select("id").eq("user_id", userId).eq("is_active", true).limit(1);
   if (funnels && funnels.length > 0) funnelId = funnels[0].id;
@@ -205,11 +176,13 @@ export async function seedDemoData(
   onStep(1);
   const teamRows = SELLER_PROFILES.map(p => ({
     name: p.name, role: p.role, user_id: userId, is_active: true,
+    monthly_scheduling_goal: p.role === "sdr" ? randInt(20, 40) : 0,
+    monthly_lead_goal: p.role === "sdr" ? Math.round((p.avgLeadsPerDay || 10) * 22) : 25,
+    monthly_revenue_goal: p.role === "closer" ? randInt(80000, 150000) : 100000,
   }));
   const { data: teamData, error: teamErr } = await supabase.from("team_members").insert(teamRows).select("id, name, role");
   if (teamErr) throw teamErr;
   const members = teamData!;
-  // Map name → id for lookup
   const memberMap = new Map(members.map(m => [m.name, m.id]));
   const closerMembers = members.filter(m => m.role === "closer");
   const sdrMembers = members.filter(m => m.role === "sdr");
@@ -221,9 +194,7 @@ export async function seedDemoData(
     const billed = rev;
     const received = Math.round(billed * m.collectRate);
     return {
-      user_id: userId,
-      funnel_id: funnelId,
-      month_year: m.my,
+      user_id: userId, funnel_id: funnelId, month_year: m.my,
       leads_generated: m.leads,
       qualification_rate: Math.round((m.qual / m.leads) * 100),
       meetings_booked: m.sched,
@@ -251,12 +222,13 @@ export async function seedDemoData(
     const workingDays = getWorkingDays(year, month);
     const numDays = workingDays.length;
 
-    // Active sellers for this month
     const activeSDRs = SELLER_PROFILES.filter(p => p.role === "sdr" && plan.my >= p.startMonth);
     const activeClosers = SELLER_PROFILES.filter(p => p.role === "closer" && plan.my >= p.startMonth);
 
+    // Pick a random SDR to link to each closer for sdr_team_member_id
+    const sdrIds = activeSDRs.map(s => memberMap.get(s.name)!);
+
     // ── SDR distribution ──
-    // Distribute total monthly leads across active SDRs proportionally to skill
     const sdrWeights = activeSDRs.map(s => s.avgLeadsPerDay!);
     const sdrTotalWeight = sdrWeights.reduce((a, b) => a + b, 0);
 
@@ -264,11 +236,8 @@ export async function seedDemoData(
       const sdr = activeSDRs[si];
       const memberId = memberMap.get(sdr.name)!;
       const sdrMonthlyLeads = Math.round(plan.leads * (sdrWeights[si] / sdrTotalWeight));
-
-      // Distribute leads across working days
       const dailyLeads = distributeTotal(sdrMonthlyLeads, numDays);
 
-      // Apply 1-2 off days per month
       const offDays = new Set<number>();
       const numOff = randInt(1, 2);
       while (offDays.size < numOff) offDays.add(randInt(0, numDays - 1));
@@ -284,13 +253,12 @@ export async function seedDemoData(
           user_id: userId, team_member_id: memberId, date: dateStr,
           funnel_id: funnelId,
           leads_generated: lg, leads_qualified: lq, meetings_scheduled: ms,
-          meetings_completed: 0, sales: 0, revenue: 0,
+          meetings_completed: 0, sales: 0, revenue: 0, net_revenue: 0,
         });
       }
     }
 
     // ── Closer distribution ──
-    // Distribute total monthly completed meetings and sales across closers
     const closerWeights = activeClosers.map(c => c.avgMeetingsPerDay!);
     const closerTotalWeight = closerWeights.reduce((a, b) => a + b, 0);
 
@@ -299,16 +267,17 @@ export async function seedDemoData(
       const memberId = memberMap.get(closer.name)!;
       const closerMonthlyMeetings = Math.round(plan.comp * (closerWeights[ci] / closerTotalWeight));
       const closerMonthlySales = Math.round(plan.sales * (closerWeights[ci] / closerTotalWeight) * (closer.closeRate! / 0.25));
-      // Clamp sales to not exceed meetings
       const clampedSales = Math.min(closerMonthlySales, closerMonthlyMeetings);
 
       const dailyMeetings = distributeTotal(closerMonthlyMeetings, numDays);
       const dailySales = distributeSales(clampedSales, dailyMeetings);
 
-      // Off days
       const offDays = new Set<number>();
       const numOff = randInt(1, 2);
       while (offDays.size < numOff) offDays.add(randInt(0, numDays - 1));
+
+      // Link to a random SDR
+      const linkedSdrId = sdrIds.length > 0 ? sdrIds[ci % sdrIds.length] : null;
 
       for (let di = 0; di < numDays; di++) {
         const day = workingDays[di];
@@ -316,12 +285,15 @@ export async function seedDemoData(
         const isOff = offDays.has(di);
         const mc = isOff ? 0 : dailyMeetings[di];
         const s = isOff ? 0 : Math.min(dailySales[di], mc);
+        const rev = s * randInt(Math.round(plan.ticket * 0.85), Math.round(plan.ticket * 1.15));
+        const netRev = Math.round(rev * rand(0.82, 0.92));
         kpiRows.push({
           user_id: userId, team_member_id: memberId, date: dateStr,
           funnel_id: funnelId,
+          sdr_team_member_id: linkedSdrId,
           leads_generated: 0, leads_qualified: 0, meetings_scheduled: 0,
           meetings_completed: mc, sales: s,
-          revenue: s * randInt(Math.round(plan.ticket * 0.85), Math.round(plan.ticket * 1.15)),
+          revenue: rev, net_revenue: netRev,
         });
       }
     }
@@ -338,12 +310,8 @@ export async function seedDemoData(
     const year = Number(yearStr);
     const month = Number(monthStr);
     const workingDays = getWorkingDays(year, month);
-
-    // ~70% of leads come from ads
     const monthlyAdLeads = Math.round(plan.leads * 0.70);
     const dailyAdLeads = distributeTotal(monthlyAdLeads, workingDays.length);
-
-    // Backward-calculate investment from leads × CPL
     const cpl = rand(35, 55);
     const monthlyInvestment = monthlyAdLeads * cpl;
 
@@ -366,20 +334,21 @@ export async function seedDemoData(
   }
   await batchInsert("ad_metrics", adRows);
 
-  // ── Step 5: Sales Channels + Monthly Data ──
+  // ── Step 5: Sales Channels + Weekly KPIs ──
   onStep(5);
-  const channelNames = ["Tráfego Pago", "Indicação", "Outbound", "Orgânico", "Eventos"];
+  const channelNames = ["Tráfego Pago", "Social Selling", "Link da Bio", "Indicação", "Outbound"];
   const channelInsert = channelNames.map(name => ({ user_id: userId, name, is_active: true, funnel_id: funnelId }));
   const { data: channelData, error: chErr } = await supabase.from("sales_channels").insert(channelInsert).select("id, name");
   if (chErr) throw chErr;
   const channels = channelData!;
 
+  // Channel monthly data
   const channelPcts: Record<string, { pct: number; targetMult: number }> = {
-    "Tráfego Pago": { pct: 0.45, targetMult: 1.05 },
-    "Indicação":    { pct: 0.25, targetMult: 1.00 },
-    "Outbound":     { pct: 0.15, targetMult: 1.10 },
-    "Orgânico":     { pct: 0.10, targetMult: 1.00 },
-    "Eventos":      { pct: 0.05, targetMult: 1.00 },
+    "Tráfego Pago":   { pct: 0.40, targetMult: 1.05 },
+    "Social Selling":  { pct: 0.20, targetMult: 1.00 },
+    "Link da Bio":     { pct: 0.15, targetMult: 1.00 },
+    "Indicação":       { pct: 0.15, targetMult: 1.00 },
+    "Outbound":        { pct: 0.10, targetMult: 1.10 },
   };
 
   const chMonthlyRows: any[] = [];
@@ -388,10 +357,7 @@ export async function seedDemoData(
     const monthRev = plan.sales * plan.ticket;
     for (const ch of channels) {
       const cfg = channelPcts[ch.name] || { pct: 0.05, targetMult: 1.0 };
-      // Events are sporadic
-      let pct = cfg.pct;
-      if (ch.name === "Eventos" && Math.random() < 0.3) pct = 0;
-      const actual = Math.round(monthRev * pct * rand(0.85, 1.15));
+      const actual = Math.round(monthRev * cfg.pct * rand(0.85, 1.15));
       const target = Math.round(actual * cfg.targetMult * rand(0.95, 1.10));
       chMonthlyRows.push({
         user_id: userId, channel_id: ch.id, month: m, year: y,
@@ -402,6 +368,37 @@ export async function seedDemoData(
   const { error: cmErr } = await supabase.from("channel_monthly_data").insert(chMonthlyRows);
   if (cmErr) throw cmErr;
 
+  // Channel weekly KPIs (last 3 months)
+  const weeklyKpiRows: any[] = [];
+  const recentMonths = MONTHLY_PLAN.slice(-3);
+  for (const plan of recentMonths) {
+    for (const ch of channels) {
+      const cfg = channelPcts[ch.name] || { pct: 0.1, targetMult: 1.0 };
+      const monthLeads = Math.round(plan.leads * cfg.pct);
+      for (let w = 1; w <= 4; w++) {
+        const weekLeads = Math.round(monthLeads / 4 * rand(0.7, 1.3));
+        const weekQual = Math.round(weekLeads * rand(0.40, 0.55));
+        const weekSched = Math.round(weekQual * rand(0.50, 0.70));
+        const weekComp = Math.round(weekSched * rand(0.65, 0.85));
+        const weekSales = Math.round(weekComp * rand(0.15, 0.35));
+        const attRate = weekSched > 0 ? Math.round((weekComp / weekSched) * 100) : 0;
+        const convRate = weekComp > 0 ? Math.round((weekSales / weekComp) * 100) : 0;
+        weeklyKpiRows.push({
+          user_id: userId, channel_id: ch.id, funnel_id: funnelId,
+          month_year: plan.my, week_number: w,
+          leads_total: weekLeads, leads_total_meta: Math.round(weekLeads * rand(0.9, 1.1)),
+          leads_qualified: weekQual, leads_qualified_meta: Math.round(weekQual * rand(0.9, 1.1)),
+          calls_scheduled: weekSched, calls_scheduled_meta: Math.round(weekSched * rand(0.9, 1.1)),
+          calls_completed: weekComp, calls_completed_meta: Math.round(weekComp * rand(0.9, 1.1)),
+          attendance_rate: attRate, attendance_rate_meta: Math.round(attRate * rand(0.95, 1.05)),
+          sales: weekSales, sales_meta: Math.round(weekSales * rand(0.9, 1.2)),
+          conversion_rate: convRate, conversion_rate_meta: Math.round(convRate * rand(0.95, 1.1)),
+        });
+      }
+    }
+  }
+  await batchInsert("channel_weekly_kpis", weeklyKpiRows);
+
   // ── Step 6: Session Metrics (12 months) ──
   await ensureSession();
   onStep(6);
@@ -409,7 +406,7 @@ export async function seedDemoData(
   for (let i = 0; i < MONTHLY_PLAN.length; i++) {
     const plan = MONTHLY_PLAN[i];
     const [y, m] = plan.my.split("-").map(Number);
-    const progress = i / (MONTHLY_PLAN.length - 1); // 0 → 1 over 12 months
+    const progress = i / (MONTHLY_PLAN.length - 1);
     const lerp = (start: number, end: number) => Math.round((start + (end - start) * progress) * rand(0.95, 1.05));
     sessionRows.push({
       user_id: userId, funnel_id: funnelId,
@@ -446,11 +443,10 @@ export async function seedDemoData(
   await ensureSession();
   onStep(8);
   const stages = ["lead", "qualification", "meeting", "proposal", "closed_won", "closed_lost"];
-  const sources = ["traffic", "inbound", "referral", "outbound", "other"];
-  const sourceWeights = [0.45, 0.10, 0.25, 0.15, 0.05];
+  const sources = ["traffic", "inbound", "referral", "outbound", "ss", "bio", "other"];
+  const sourceWeights = [0.35, 0.10, 0.15, 0.10, 0.15, 0.10, 0.05];
 
   const allLeadRows: any[] = [];
-  const allMeetingRows: any[] = [];
 
   for (let mi = 0; mi < MONTHLY_PLAN.length; mi++) {
     const plan = MONTHLY_PLAN[mi];
@@ -458,7 +454,7 @@ export async function seedDemoData(
     const year = Number(yearStr);
     const month = Number(monthStr);
     const numLeads = LEADS_PER_MONTH[mi];
-    const monthAge = MONTHLY_PLAN.length - 1 - mi; // 11 = oldest, 0 = newest
+    const monthAge = MONTHLY_PLAN.length - 1 - mi;
 
     for (let li = 0; li < numLeads; li++) {
       const day = randInt(1, Math.min(28, new Date(year, month, 0).getDate()));
@@ -466,11 +462,9 @@ export async function seedDemoData(
       const firstName = BRAZILIAN_FIRST[randInt(0, BRAZILIAN_FIRST.length - 1)];
       const lastName = BRAZILIAN_LAST[randInt(0, BRAZILIAN_LAST.length - 1)];
 
-      // Older leads are more likely to be in later stages
       let stage: string;
       const r = Math.random();
       if (monthAge >= 6) {
-        // Old leads: mostly closed
         if (r < 0.05) stage = "lead";
         else if (r < 0.10) stage = "qualification";
         else if (r < 0.15) stage = "meeting";
@@ -478,7 +472,6 @@ export async function seedDemoData(
         else if (r < 0.70) stage = "closed_won";
         else stage = "closed_lost";
       } else if (monthAge >= 2) {
-        // Mid-age leads: mixed
         if (r < 0.10) stage = "lead";
         else if (r < 0.20) stage = "qualification";
         else if (r < 0.35) stage = "meeting";
@@ -486,7 +479,6 @@ export async function seedDemoData(
         else if (r < 0.75) stage = "closed_won";
         else stage = "closed_lost";
       } else {
-        // Recent leads: mostly early stages
         if (r < 0.30) stage = "lead";
         else if (r < 0.55) stage = "qualification";
         else if (r < 0.70) stage = "meeting";
@@ -504,29 +496,34 @@ export async function seedDemoData(
         if (sr <= cumul) { source = sources[si]; break; }
       }
 
-      // Assignment: early stages → SDRs, later stages → closers
       const isEarlyStage = stage === "lead" || stage === "qualification";
       const assignPool = isEarlyStage ? sdrMembers : closerMembers;
       const assignedMember = assignPool[randInt(0, assignPool.length - 1)];
 
-      allLeadRows.push({
+      const leadRow: any = {
         user_id: userId, funnel_id: funnelId,
         name: `${firstName} ${lastName}`,
-        stage,
-        lead_source: source,
+        stage, lead_source: source,
         assigned_to: assignedMember.id,
-        created_at: dateStr,
-        stage_changed_at: dateStr,
+        created_at: dateStr, stage_changed_at: dateStr,
         proposal_value: (stage === "proposal" || stage === "closed_won") ? randInt(7000, 15000) : null,
         company: `Empresa ${randInt(100, 999)}`,
-      });
+      };
+
+      // Add campaign info for traffic leads
+      if (source === "traffic") {
+        const campaigns = ["LS_Captação_Geral", "Remarketing_Base", "Lookalike_Clientes", "Tráfego_Direto"];
+        leadRow.campaign_name = campaigns[randInt(0, campaigns.length - 1)];
+      }
+
+      allLeadRows.push(leadRow);
     }
   }
 
   const { data: leadsData, error: leadErr } = await supabase.from("leads").insert(allLeadRows).select("id, stage, created_at, lead_source");
   if (leadErr) throw leadErr;
 
-  // Pipeline meetings for leads in meeting+ stages
+  // Pipeline meetings
   const meetingLeads = leadsData!.filter(l => ["meeting", "proposal", "closed_won", "closed_lost"].includes(l.stage));
   if (meetingLeads.length > 0) {
     const meetingRows = meetingLeads.map(lead => {
@@ -554,21 +551,17 @@ export async function seedDemoData(
     const stageIdx = stageOrder.indexOf(lead.stage);
     if (stageIdx < 0) continue;
     const createdAt = new Date(lead.created_at).getTime();
-
-    // Build path: lead → ... → current stage
     const passedStages = stageOrder.slice(0, stageIdx + 1);
     const filteredStages = lead.stage === "closed_lost"
       ? passedStages.filter(s => s !== "closed_won")
       : passedStages.filter(s => s !== "closed_lost");
 
-    // Transition null → first stage
     transitionRows.push({
       user_id: userId, lead_id: lead.id,
       from_stage: null, to_stage: filteredStages[0],
       transitioned_at: new Date(createdAt).toISOString(),
     });
 
-    // Subsequent transitions with realistic delays
     const delays = [0, randInt(2, 5), randInt(3, 7), randInt(1, 3), randInt(2, 10)];
     let cumMs = createdAt;
     for (let i = 0; i < filteredStages.length - 1; i++) {
@@ -584,14 +577,61 @@ export async function seedDemoData(
   }
 
   await batchInsert("lead_stage_transitions", transitionRows);
+
+  // ── Step 10: Diagnostics + CAC ──
+  await ensureSession();
+  onStep(10);
+
+  const diagRows: any[] = [];
+  const cacRows: any[] = [];
+  for (let i = 0; i < MONTHLY_PLAN.length; i++) {
+    const plan = MONTHLY_PLAN[i];
+    const progress = i / (MONTHLY_PLAN.length - 1);
+    const lerp = (start: number, end: number) => Math.round((start + (end - start) * progress) * rand(0.92, 1.08));
+
+    diagRows.push({
+      user_id: userId, month_year: plan.my,
+      q1_leads_per_week: lerp(40, 90),
+      q2_lead_to_meeting: lerp(18, 32),
+      q3_meeting_to_proposal: lerp(55, 72),
+      q4_proposal_to_close: lerp(18, 28),
+      q5_team_knows_goals: lerp(2, 5),
+      q6_weekly_data_review: lerp(2, 5),
+      q7_sdr_closer_sla: lerp(2, 5),
+      total_score: lerp(35, 72),
+    });
+
+    const rev = plan.sales * plan.ticket;
+    const mktInvestment = Math.round(rev * rand(0.08, 0.15));
+    const salesInvestment = Math.round(rev * rand(0.05, 0.10));
+    const toolsInvestment = randInt(2000, 5000);
+    const totalInvestment = mktInvestment + salesInvestment + toolsInvestment;
+    const cac = plan.sales > 0 ? Math.round(totalInvestment / plan.sales) : 0;
+
+    cacRows.push({
+      user_id: userId, month_year: plan.my,
+      marketing_investment: mktInvestment,
+      sales_investment: salesInvestment,
+      tools_investment: toolsInvestment,
+      total_investment: totalInvestment,
+      new_clients: plan.sales,
+      cac,
+      avg_ticket: plan.ticket,
+      payback_months: plan.ticket > 0 ? Math.round((cac / plan.ticket) * 10) / 10 : 0,
+    });
+  }
+
+  await batchInsert("diagnostics", diagRows);
+  await batchInsert("cac_calculations", cacRows);
 }
 
 // ─── CLEAN FUNCTION ─────────────────────────────────────────────────────────
 export async function cleanDemoData(userId: string) {
   const tables = [
-    "daily_seller_kpis", "ad_metrics", "channel_monthly_data", "sales_channels",
-    "goal_simulations", "session_metrics", "lead_stage_transitions", "pipeline_meetings",
-    "leads", "monthly_snapshots", "team_members",
+    "channel_weekly_kpis", "daily_seller_kpis", "ad_metrics", "channel_monthly_data",
+    "sales_channels", "goal_simulations", "session_metrics", "lead_stage_transitions",
+    "pipeline_meetings", "leads", "monthly_snapshots", "team_members",
+    "diagnostics", "cac_calculations",
   ];
   for (const table of tables) {
     const { error } = await (supabase.from(table as any) as any).delete().eq("user_id", userId);
