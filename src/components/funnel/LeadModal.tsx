@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
 import type { Lead, LeadFormData } from "./types";
-import { STAGES, SOURCES, formatBRL } from "./types";
+import { STAGES, SOURCES } from "./types";
 
 interface Props {
   open: boolean;
@@ -27,11 +27,14 @@ function currencyDisplay(v: number | null): string {
   return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
 }
 
+const EMPTY_FORM: LeadFormData = {
+  name: "", company: "", stage: "lead", proposal_value: null,
+  assigned_to: null, lead_source: null, notes: "", contact_email: "", contact_phone: "",
+  campaign_name: "", ad_set_name: "", ad_name: "",
+};
+
 export function LeadModal({ open, onClose, lead, teamMembers, onSave, saving }: Props) {
-  const [form, setForm] = useState<LeadFormData>({
-    name: "", company: "", stage: "lead", proposal_value: null,
-    assigned_to: null, lead_source: null, notes: "", contact_email: "", contact_phone: "",
-  });
+  const [form, setForm] = useState<LeadFormData>({ ...EMPTY_FORM });
   const [rawCurrency, setRawCurrency] = useState("");
 
   useEffect(() => {
@@ -41,10 +44,11 @@ export function LeadModal({ open, onClose, lead, teamMembers, onSave, saving }: 
         proposal_value: lead.proposal_value, assigned_to: lead.assigned_to,
         lead_source: lead.lead_source, notes: lead.notes || "",
         contact_email: lead.contact_email || "", contact_phone: lead.contact_phone || "",
+        campaign_name: lead.campaign_name || "", ad_set_name: lead.ad_set_name || "", ad_name: lead.ad_name || "",
       });
       setRawCurrency(lead.proposal_value ? currencyDisplay(lead.proposal_value) : "");
     } else {
-      setForm({ name: "", company: "", stage: "lead", proposal_value: null, assigned_to: null, lead_source: null, notes: "", contact_email: "", contact_phone: "" });
+      setForm({ ...EMPTY_FORM });
       setRawCurrency("");
     }
   }, [lead, open]);
@@ -60,6 +64,8 @@ export function LeadModal({ open, onClose, lead, teamMembers, onSave, saving }: 
     if (!form.name.trim()) return;
     onSave({ ...form, id: lead?.id, name: form.name.trim(), company: form.company.trim() });
   };
+
+  const showCampaignFields = form.lead_source === "traffic";
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
@@ -110,6 +116,25 @@ export function LeadModal({ open, onClose, lead, teamMembers, onSave, saving }: 
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Campaign tracking fields - shown when source is traffic */}
+            {showCampaignFields && (
+              <>
+                <div className="space-y-2 sm:col-span-2">
+                  <Label>Nome da Campanha</Label>
+                  <Input value={form.campaign_name} onChange={(e) => setForm({ ...form, campaign_name: e.target.value })} placeholder="Ex: Captação Leads Março 2025" maxLength={200} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Conjunto de Anúncios</Label>
+                  <Input value={form.ad_set_name} onChange={(e) => setForm({ ...form, ad_set_name: e.target.value })} placeholder="Ex: Público Lookalike 1%" maxLength={200} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Nome do Anúncio</Label>
+                  <Input value={form.ad_name} onChange={(e) => setForm({ ...form, ad_name: e.target.value })} placeholder="Ex: Criativo Vídeo A" maxLength={200} />
+                </div>
+              </>
+            )}
+
             <div className="space-y-2">
               <Label>Email de Contato</Label>
               <Input type="email" value={form.contact_email} onChange={(e) => setForm({ ...form, contact_email: e.target.value })} placeholder="email@exemplo.com" />

@@ -14,6 +14,9 @@ export interface Lead {
   contact_phone: string | null;
   created_at: string | null;
   updated_at: string | null;
+  campaign_name: string | null;
+  ad_set_name: string | null;
+  ad_name: string | null;
 }
 
 export interface LeadFormData {
@@ -27,6 +30,9 @@ export interface LeadFormData {
   notes: string;
   contact_email: string;
   contact_phone: string;
+  campaign_name: string;
+  ad_set_name: string;
+  ad_name: string;
 }
 
 export interface Filters {

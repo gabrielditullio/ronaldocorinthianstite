@@ -56,7 +56,12 @@ export function FunnelTable({ leads, memberMap, onEdit }: Props) {
               const days = daysInStage(l.stage_changed_at);
               return (
                 <TableRow key={l.id} className="cursor-pointer hover:bg-muted/50" onClick={() => onEdit(l)}>
-                  <TableCell className="font-medium">{l.name}</TableCell>
+                  <TableCell className="font-medium">
+                    {l.name}
+                    {l.lead_source === "traffic" && l.campaign_name && (
+                      <p className="text-[10px] text-muted-foreground truncate max-w-[200px]">📢 {l.campaign_name}</p>
+                    )}
+                  </TableCell>
                   <TableCell className="text-muted-foreground">{l.company || "—"}</TableCell>
                   <TableCell>
                     <Badge className={`text-xs ${stageColor(l.stage)} border`}>{stageLabel(l.stage)}</Badge>
