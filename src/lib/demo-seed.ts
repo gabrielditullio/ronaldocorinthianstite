@@ -591,13 +591,13 @@ export async function seedDemoData(
 
     diagRows.push({
       user_id: userId, month_year: plan.my,
-      q1_leads_per_week: lerp(40, 90),
-      q2_lead_to_meeting: lerp(18, 32),
-      q3_meeting_to_proposal: lerp(55, 72),
-      q4_proposal_to_close: lerp(18, 28),
-      q5_team_knows_goals: lerp(2, 5),
-      q6_weekly_data_review: lerp(2, 5),
-      q7_sdr_closer_sla: lerp(2, 5),
+      q1_leads_per_week: Math.min(5, Math.max(1, lerp(2, 5))),
+      q2_lead_to_meeting: Math.min(5, Math.max(1, lerp(2, 4))),
+      q3_meeting_to_proposal: Math.min(5, Math.max(1, lerp(2, 5))),
+      q4_proposal_to_close: Math.min(5, Math.max(1, lerp(2, 4))),
+      q5_team_knows_goals: Math.min(5, Math.max(1, lerp(2, 5))),
+      q6_weekly_data_review: Math.min(5, Math.max(1, lerp(2, 5))),
+      q7_sdr_closer_sla: Math.min(5, Math.max(1, lerp(2, 5))),
       total_score: lerp(35, 72),
     });
 
