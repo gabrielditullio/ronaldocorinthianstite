@@ -27,6 +27,9 @@ export interface LeadFormData {
   notes: string;
   contact_email: string;
   contact_phone: string;
+  campaign_name: string;
+  ad_set_name: string;
+  ad_name: string;
 }
 
 export interface Filters {
