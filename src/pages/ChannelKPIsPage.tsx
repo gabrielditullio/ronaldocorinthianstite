@@ -184,9 +184,21 @@ export default function ChannelKPIsPage() {
   // Totals
   const totals = useMemo(() => {
     const t: Record<string, number> = {};
+    const totalScheduled = weeklyData.reduce((s, w) => s + (w.calls_scheduled || 0), 0);
+    const totalCompleted = weeklyData.reduce((s, w) => s + (w.calls_completed || 0), 0);
+    const totalSales = weeklyData.reduce((s, w) => s + (w.sales || 0), 0);
+
     KPI_ROWS.forEach((kpi) => {
-      t[kpi.key] = weeklyData.reduce((s, w) => s + ((w as any)[kpi.key] || 0), 0);
-      t[`${kpi.key}_meta`] = weeklyData.reduce((s, w) => s + ((w as any)[`${kpi.key}_meta`] || 0), 0);
+      if (kpi.key === "attendance_rate") {
+        t[kpi.key] = totalScheduled > 0 ? Math.round((totalCompleted / totalScheduled) * 1000) / 10 : 0;
+        t[`${kpi.key}_meta`] = weeklyData.reduce((s, w) => s + ((w as any)[`${kpi.key}_meta`] || 0), 0);
+      } else if (kpi.key === "conversion_rate") {
+        t[kpi.key] = totalCompleted > 0 ? Math.round((totalSales / totalCompleted) * 1000) / 10 : 0;
+        t[`${kpi.key}_meta`] = weeklyData.reduce((s, w) => s + ((w as any)[`${kpi.key}_meta`] || 0), 0);
+      } else {
+        t[kpi.key] = weeklyData.reduce((s, w) => s + ((w as any)[kpi.key] || 0), 0);
+        t[`${kpi.key}_meta`] = weeklyData.reduce((s, w) => s + ((w as any)[`${kpi.key}_meta`] || 0), 0);
+      }
     });
     return t;
   }, [weeklyData]);
