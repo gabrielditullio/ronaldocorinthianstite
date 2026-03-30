@@ -266,6 +266,93 @@ export type Database = {
           },
         ]
       }
+      channel_weekly_kpis: {
+        Row: {
+          attendance_rate: number | null
+          attendance_rate_meta: number | null
+          calls_completed: number | null
+          calls_completed_meta: number | null
+          calls_scheduled: number | null
+          calls_scheduled_meta: number | null
+          channel_id: string
+          conversion_rate: number | null
+          conversion_rate_meta: number | null
+          created_at: string | null
+          funnel_id: string | null
+          id: string
+          leads_qualified: number | null
+          leads_qualified_meta: number | null
+          leads_total: number | null
+          leads_total_meta: number | null
+          month_year: string
+          sales: number | null
+          sales_meta: number | null
+          user_id: string
+          week_number: number
+        }
+        Insert: {
+          attendance_rate?: number | null
+          attendance_rate_meta?: number | null
+          calls_completed?: number | null
+          calls_completed_meta?: number | null
+          calls_scheduled?: number | null
+          calls_scheduled_meta?: number | null
+          channel_id: string
+          conversion_rate?: number | null
+          conversion_rate_meta?: number | null
+          created_at?: string | null
+          funnel_id?: string | null
+          id?: string
+          leads_qualified?: number | null
+          leads_qualified_meta?: number | null
+          leads_total?: number | null
+          leads_total_meta?: number | null
+          month_year: string
+          sales?: number | null
+          sales_meta?: number | null
+          user_id: string
+          week_number: number
+        }
+        Update: {
+          attendance_rate?: number | null
+          attendance_rate_meta?: number | null
+          calls_completed?: number | null
+          calls_completed_meta?: number | null
+          calls_scheduled?: number | null
+          calls_scheduled_meta?: number | null
+          channel_id?: string
+          conversion_rate?: number | null
+          conversion_rate_meta?: number | null
+          created_at?: string | null
+          funnel_id?: string | null
+          id?: string
+          leads_qualified?: number | null
+          leads_qualified_meta?: number | null
+          leads_total?: number | null
+          leads_total_meta?: number | null
+          month_year?: string
+          sales?: number | null
+          sales_meta?: number | null
+          user_id?: string
+          week_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "channel_weekly_kpis_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "sales_channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "channel_weekly_kpis_funnel_id_fkey"
+            columns: ["funnel_id"]
+            isOneToOne: false
+            referencedRelation: "funnels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       daily_seller_kpis: {
         Row: {
           created_at: string
