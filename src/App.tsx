@@ -30,8 +30,7 @@ import BenchmarksPage from "./pages/BenchmarksPage";
 import PaidTrafficPage from "./pages/PaidTrafficPage";
 import SellerKPIsPage from "./pages/SellerKPIsPage";
 import ChannelsPage from "./pages/ChannelsPage";
-
-
+import ChannelKPIsPage from "./pages/ChannelKPIsPage";
 import FunnelManagementPage from "./pages/FunnelManagementPage";
 import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
 import AdminUsersPage from "./pages/admin/AdminUsersPage";
