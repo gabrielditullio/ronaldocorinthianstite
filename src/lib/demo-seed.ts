@@ -6,8 +6,10 @@ const randInt = (min: number, max: number) => Math.round(rand(min, max));
 
 function getWorkingDays(year: number, month: number): number[] {
   const days: number[] = [];
+  const now = new Date();
   const dim = new Date(year, month, 0).getDate();
-  for (let d = 1; d <= dim; d++) {
+  const maxDay = (year === now.getFullYear() && month === now.getMonth() + 1) ? Math.min(dim, now.getDate()) : dim;
+  for (let d = 1; d <= maxDay; d++) {
     const dow = new Date(year, month - 1, d).getDay();
     if (dow !== 0 && dow !== 6) days.push(d);
   }
@@ -123,7 +125,6 @@ interface MonthPlan {
 }
 
 const MONTHLY_PLAN: MonthPlan[] = [
-  { my: "2025-03", leads: 300, qual: 150, sched: 105, comp: 74,  sales: 16, ticket: 8800,  collectRate: 0.85 },
   { my: "2025-04", leads: 290, qual: 145, sched: 102, comp: 71,  sales: 16, ticket: 8900,  collectRate: 0.85 },
   { my: "2025-05", leads: 320, qual: 163, sched: 114, comp: 81,  sales: 19, ticket: 9000,  collectRate: 0.86 },
   { my: "2025-06", leads: 340, qual: 170, sched: 121, comp: 86,  sales: 20, ticket: 9100,  collectRate: 0.86 },
@@ -135,6 +136,7 @@ const MONTHLY_PLAN: MonthPlan[] = [
   { my: "2025-12", leads: 380, qual: 198, sched: 141, comp: 99,  sales: 24, ticket: 9800,  collectRate: 0.87 },
   { my: "2026-01", leads: 510, qual: 280, sched: 207, comp: 155, sales: 42, ticket: 10200, collectRate: 0.90 },
   { my: "2026-02", leads: 490, qual: 255, sched: 184, comp: 134, sales: 34, ticket: 10000, collectRate: 0.90 },
+  { my: "2026-03", leads: 530, qual: 290, sched: 215, comp: 160, sales: 44, ticket: 10400, collectRate: 0.91 },
 ];
 
 const LEADS_PER_MONTH = [10, 10, 11, 12, 14, 16, 17, 18, 20, 22, 24, 25];
