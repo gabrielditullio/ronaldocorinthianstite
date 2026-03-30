@@ -30,6 +30,7 @@ import BenchmarksPage from "./pages/BenchmarksPage";
 import PaidTrafficPage from "./pages/PaidTrafficPage";
 import SellerKPIsPage from "./pages/SellerKPIsPage";
 import ChannelsPage from "./pages/ChannelsPage";
+import MetaAdsCampaignsPage from "./pages/MetaAdsCampaignsPage";
 
 import FunnelManagementPage from "./pages/FunnelManagementPage";
 import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
