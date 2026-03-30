@@ -541,7 +541,10 @@ export type Database = {
       }
       leads: {
         Row: {
+          ad_name: string | null
+          ad_set_name: string | null
           assigned_to: string | null
+          campaign_name: string | null
           company: string | null
           contact_email: string | null
           contact_phone: string | null
@@ -559,7 +562,10 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          ad_name?: string | null
+          ad_set_name?: string | null
           assigned_to?: string | null
+          campaign_name?: string | null
           company?: string | null
           contact_email?: string | null
           contact_phone?: string | null
@@ -577,7 +583,10 @@ export type Database = {
           user_id: string
         }
         Update: {
+          ad_name?: string | null
+          ad_set_name?: string | null
           assigned_to?: string | null
+          campaign_name?: string | null
           company?: string | null
           contact_email?: string | null
           contact_phone?: string | null
@@ -611,6 +620,84 @@ export type Database = {
           },
           {
             foreignKeyName: "leads_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meta_ads_campaigns: {
+        Row: {
+          ad_set_budget: number | null
+          amount_spent: number | null
+          attribution_setting: string | null
+          budget_type: string | null
+          campaign_name: string
+          cost_per_result: number | null
+          created_at: string | null
+          delivery_status: string | null
+          end_date: string | null
+          funnel_id: string | null
+          id: string
+          impressions: number | null
+          reach: number | null
+          report_end_date: string
+          report_start_date: string
+          result_indicator: string | null
+          results: number | null
+          user_id: string
+        }
+        Insert: {
+          ad_set_budget?: number | null
+          amount_spent?: number | null
+          attribution_setting?: string | null
+          budget_type?: string | null
+          campaign_name: string
+          cost_per_result?: number | null
+          created_at?: string | null
+          delivery_status?: string | null
+          end_date?: string | null
+          funnel_id?: string | null
+          id?: string
+          impressions?: number | null
+          reach?: number | null
+          report_end_date: string
+          report_start_date: string
+          result_indicator?: string | null
+          results?: number | null
+          user_id: string
+        }
+        Update: {
+          ad_set_budget?: number | null
+          amount_spent?: number | null
+          attribution_setting?: string | null
+          budget_type?: string | null
+          campaign_name?: string
+          cost_per_result?: number | null
+          created_at?: string | null
+          delivery_status?: string | null
+          end_date?: string | null
+          funnel_id?: string | null
+          id?: string
+          impressions?: number | null
+          reach?: number | null
+          report_end_date?: string
+          report_start_date?: string
+          result_indicator?: string | null
+          results?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meta_ads_campaigns_funnel_id_fkey"
+            columns: ["funnel_id"]
+            isOneToOne: false
+            referencedRelation: "funnels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meta_ads_campaigns_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
