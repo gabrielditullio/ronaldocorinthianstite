@@ -39,14 +39,21 @@ interface WeeklyKPI {
 }
 
 const KPI_ROWS = [
-  { key: "leads_total", label: "Total de Leads no Funil", isPercent: false },
-  { key: "leads_qualified", label: "Leads Qualificados", isPercent: false },
-  { key: "calls_scheduled", label: "Calls Agendadas", isPercent: false },
-  { key: "calls_completed", label: "Calls Realizadas", isPercent: false },
-  { key: "attendance_rate", label: "Taxa de Presença", isPercent: true },
-  { key: "sales", label: "Vendas", isPercent: false },
-  { key: "conversion_rate", label: "Taxa de Conversão", isPercent: true },
+  { key: "leads_total", label: "Total de Leads no Funil", isPercent: false, computed: false },
+  { key: "leads_qualified", label: "Leads Qualificados", isPercent: false, computed: false },
+  { key: "calls_scheduled", label: "Calls Agendadas", isPercent: false, computed: false },
+  { key: "calls_completed", label: "Calls Realizadas", isPercent: false, computed: false },
+  { key: "attendance_rate", label: "Taxa de Presença", isPercent: true, computed: true },
+  { key: "sales", label: "Vendas", isPercent: false, computed: false },
+  { key: "conversion_rate", label: "Taxa de Conversão", isPercent: true, computed: true },
 ] as const;
+
+function calcAttendanceRate(w: WeeklyKPI): number {
+  return w.calls_scheduled > 0 ? Math.round((w.calls_completed / w.calls_scheduled) * 1000) / 10 : 0;
+}
+function calcConversionRate(w: WeeklyKPI): number {
+  return w.calls_completed > 0 ? Math.round((w.sales / w.calls_completed) * 1000) / 10 : 0;
+}
 
 type KPIKey = typeof KPI_ROWS[number]["key"];
 
@@ -112,7 +119,11 @@ export default function ChannelKPIsPage() {
         const existing = (data || []) as any[];
         const weeks = WEEKS.map((w) => {
           const found = existing.find((r: any) => r.week_number === w);
-          return found ? { ...found } : emptyWeek(selectedChannel, monthYear, w);
+          const week = found ? { ...found } : emptyWeek(selectedChannel, monthYear, w);
+          // Recalculate computed fields from actual data
+          week.attendance_rate = calcAttendanceRate(week);
+          week.conversion_rate = calcConversionRate(week);
+          return week;
         });
         setWeeklyData(weeks);
         setDirty(false);
@@ -122,7 +133,11 @@ export default function ChannelKPIsPage() {
   const updateCell = useCallback((weekIdx: number, field: string, value: number) => {
     setWeeklyData((prev) => {
       const copy = [...prev];
-      copy[weekIdx] = { ...copy[weekIdx], [field]: value };
+      const updated = { ...copy[weekIdx], [field]: value };
+      // Auto-calculate rates
+      updated.attendance_rate = calcAttendanceRate(updated);
+      updated.conversion_rate = calcConversionRate(updated);
+      copy[weekIdx] = updated;
       return copy;
     });
     setDirty(true);
@@ -173,9 +188,21 @@ export default function ChannelKPIsPage() {
   // Totals
   const totals = useMemo(() => {
     const t: Record<string, number> = {};
+    const totalScheduled = weeklyData.reduce((s, w) => s + (w.calls_scheduled || 0), 0);
+    const totalCompleted = weeklyData.reduce((s, w) => s + (w.calls_completed || 0), 0);
+    const totalSales = weeklyData.reduce((s, w) => s + (w.sales || 0), 0);
+
     KPI_ROWS.forEach((kpi) => {
-      t[kpi.key] = weeklyData.reduce((s, w) => s + ((w as any)[kpi.key] || 0), 0);
-      t[`${kpi.key}_meta`] = weeklyData.reduce((s, w) => s + ((w as any)[`${kpi.key}_meta`] || 0), 0);
+      if (kpi.key === "attendance_rate") {
+        t[kpi.key] = totalScheduled > 0 ? Math.round((totalCompleted / totalScheduled) * 1000) / 10 : 0;
+        t[`${kpi.key}_meta`] = weeklyData.reduce((s, w) => s + ((w as any)[`${kpi.key}_meta`] || 0), 0);
+      } else if (kpi.key === "conversion_rate") {
+        t[kpi.key] = totalCompleted > 0 ? Math.round((totalSales / totalCompleted) * 1000) / 10 : 0;
+        t[`${kpi.key}_meta`] = weeklyData.reduce((s, w) => s + ((w as any)[`${kpi.key}_meta`] || 0), 0);
+      } else {
+        t[kpi.key] = weeklyData.reduce((s, w) => s + ((w as any)[kpi.key] || 0), 0);
+        t[`${kpi.key}_meta`] = weeklyData.reduce((s, w) => s + ((w as any)[`${kpi.key}_meta`] || 0), 0);
+      }
     });
     return t;
   }, [weeklyData]);
@@ -286,14 +313,20 @@ export default function ChannelKPIsPage() {
                       {WEEKS.map((w, wIdx) => (
                         <React.Fragment key={w}>
                           <TableCell className="p-1">
-                            <Input
-                              type="number"
-                              step={kpi.isPercent ? "0.1" : "1"}
-                              className="h-8 text-center text-sm w-full"
-                              value={(weeklyData[wIdx] as any)?.[kpi.key] || ""}
-                              onChange={(e) => updateCell(wIdx, kpi.key, Number(e.target.value) || 0)}
-                              placeholder="0"
-                            />
+                            {kpi.computed ? (
+                              <span className="block h-8 leading-8 text-center text-sm font-medium text-muted-foreground">
+                                {((weeklyData[wIdx] as any)?.[kpi.key] || 0).toFixed(1)}%
+                              </span>
+                            ) : (
+                              <Input
+                                type="number"
+                                step={kpi.isPercent ? "0.1" : "1"}
+                                className="h-8 text-center text-sm w-full"
+                                value={(weeklyData[wIdx] as any)?.[kpi.key] || ""}
+                                onChange={(e) => updateCell(wIdx, kpi.key, Number(e.target.value) || 0)}
+                                placeholder="0"
+                              />
+                            )}
                           </TableCell>
                           <TableCell className="p-1 border-r">
                             <Input
