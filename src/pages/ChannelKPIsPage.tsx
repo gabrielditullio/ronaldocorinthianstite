@@ -129,7 +129,11 @@ export default function ChannelKPIsPage() {
   const updateCell = useCallback((weekIdx: number, field: string, value: number) => {
     setWeeklyData((prev) => {
       const copy = [...prev];
-      copy[weekIdx] = { ...copy[weekIdx], [field]: value };
+      const updated = { ...copy[weekIdx], [field]: value };
+      // Auto-calculate rates
+      updated.attendance_rate = calcAttendanceRate(updated);
+      updated.conversion_rate = calcConversionRate(updated);
+      copy[weekIdx] = updated;
       return copy;
     });
     setDirty(true);
