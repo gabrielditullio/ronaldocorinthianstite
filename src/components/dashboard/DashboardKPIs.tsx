@@ -133,7 +133,7 @@ export function DashboardKPIs({
       mom: { current: stats.conversionRate, previous: stats.prevConversion, format: (v: number) => `${v.toFixed(1)}%` },
     },
     {
-      label: "Show Rate",
+      label: "Taxa de Presença",
       value: `${stats.showRate.toFixed(1)}%`,
       icon: CalendarCheck,
       iconBg: "bg-primary/10",
