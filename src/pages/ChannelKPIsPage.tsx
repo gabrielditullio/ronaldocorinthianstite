@@ -119,7 +119,11 @@ export default function ChannelKPIsPage() {
         const existing = (data || []) as any[];
         const weeks = WEEKS.map((w) => {
           const found = existing.find((r: any) => r.week_number === w);
-          return found ? { ...found } : emptyWeek(selectedChannel, monthYear, w);
+          const week = found ? { ...found } : emptyWeek(selectedChannel, monthYear, w);
+          // Recalculate computed fields from actual data
+          week.attendance_rate = calcAttendanceRate(week);
+          week.conversion_rate = calcConversionRate(week);
+          return week;
         });
         setWeeklyData(weeks);
         setDirty(false);
