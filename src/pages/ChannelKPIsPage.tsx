@@ -309,14 +309,20 @@ export default function ChannelKPIsPage() {
                       {WEEKS.map((w, wIdx) => (
                         <React.Fragment key={w}>
                           <TableCell className="p-1">
-                            <Input
-                              type="number"
-                              step={kpi.isPercent ? "0.1" : "1"}
-                              className="h-8 text-center text-sm w-full"
-                              value={(weeklyData[wIdx] as any)?.[kpi.key] || ""}
-                              onChange={(e) => updateCell(wIdx, kpi.key, Number(e.target.value) || 0)}
-                              placeholder="0"
-                            />
+                            {kpi.computed ? (
+                              <span className="block h-8 leading-8 text-center text-sm font-medium text-muted-foreground">
+                                {((weeklyData[wIdx] as any)?.[kpi.key] || 0).toFixed(1)}%
+                              </span>
+                            ) : (
+                              <Input
+                                type="number"
+                                step={kpi.isPercent ? "0.1" : "1"}
+                                className="h-8 text-center text-sm w-full"
+                                value={(weeklyData[wIdx] as any)?.[kpi.key] || ""}
+                                onChange={(e) => updateCell(wIdx, kpi.key, Number(e.target.value) || 0)}
+                                placeholder="0"
+                              />
+                            )}
                           </TableCell>
                           <TableCell className="p-1 border-r">
                             <Input
