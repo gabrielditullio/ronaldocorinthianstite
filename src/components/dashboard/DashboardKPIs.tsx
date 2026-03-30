@@ -153,7 +153,7 @@ export function DashboardKPIs({
     { label: "Faturamento", current: stats.revenue, previous: stats.prevRevenue, format: formatBRL },
     { label: "Receita", current: stats.netRevenue, previous: stats.prevNetRevenue, format: formatBRL },
     { label: "Conversão", current: stats.conversionRate, previous: stats.prevConversion, format: (v: number) => `${v.toFixed(1)}%` },
-    { label: "Show Rate", current: stats.showRate, previous: stats.prevShowRate, format: (v: number) => `${v.toFixed(1)}%` },
+    { label: "Taxa de Presença", current: stats.showRate, previous: stats.prevShowRate, format: (v: number) => `${v.toFixed(1)}%` },
   ] : [];
 
   const fmtDate = (d: Date | null) => {
