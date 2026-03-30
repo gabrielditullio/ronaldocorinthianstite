@@ -28,8 +28,8 @@ const navGroups = [
   label: "PIPELINE",
   items: [
   { title: "Funil Completo", url: "/funil", icon: TrendingDown },
+  { title: "Funil por Canal", url: "/canal-kpis", icon: Columns3 },
   { title: "Tráfego Pago", url: "/trafego-pago", icon: Megaphone },
-  { title: "Campanhas Meta Ads", url: "/meta-ads", icon: Columns3 },
   { title: "KPIs por Vendedor", url: "/kpis-vendedores", icon: Users },
   { title: "Performance SDR", url: "/sdr-performance", icon: UserCheck },
   { title: "Performance Closer", url: "/closer-performance", icon: Target }]

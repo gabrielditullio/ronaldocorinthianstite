@@ -30,8 +30,7 @@ import BenchmarksPage from "./pages/BenchmarksPage";
 import PaidTrafficPage from "./pages/PaidTrafficPage";
 import SellerKPIsPage from "./pages/SellerKPIsPage";
 import ChannelsPage from "./pages/ChannelsPage";
-import MetaAdsCampaignsPage from "./pages/MetaAdsCampaignsPage";
-
+import ChannelKPIsPage from "./pages/ChannelKPIsPage";
 import FunnelManagementPage from "./pages/FunnelManagementPage";
 import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
 import AdminUsersPage from "./pages/admin/AdminUsersPage";
@@ -89,7 +88,7 @@ const App = () => (
             <Route path="/trafego-pago" element={<ProtectedRoute><PaidTrafficPage /></ProtectedRoute>} />
             <Route path="/kpis-vendedores" element={<ProtectedRoute><SellerKPIsPage /></ProtectedRoute>} />
             <Route path="/canais" element={<ProtectedRoute><ChannelsPage /></ProtectedRoute>} />
-            <Route path="/meta-ads" element={<ProtectedRoute><MetaAdsCampaignsPage /></ProtectedRoute>} />
+            <Route path="/canal-kpis" element={<ProtectedRoute><ChannelKPIsPage /></ProtectedRoute>} />
 
 
             {/* Admin routes */}
