@@ -6,8 +6,10 @@ const randInt = (min: number, max: number) => Math.round(rand(min, max));
 
 function getWorkingDays(year: number, month: number): number[] {
   const days: number[] = [];
+  const now = new Date();
   const dim = new Date(year, month, 0).getDate();
-  for (let d = 1; d <= dim; d++) {
+  const maxDay = (year === now.getFullYear() && month === now.getMonth() + 1) ? Math.min(dim, now.getDate()) : dim;
+  for (let d = 1; d <= maxDay; d++) {
     const dow = new Date(year, month - 1, d).getDay();
     if (dow !== 0 && dow !== 6) days.push(d);
   }
