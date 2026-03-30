@@ -1,0 +1,2 @@
+ALTER TABLE public.leads DROP CONSTRAINT leads_lead_source_check;
+ALTER TABLE public.leads ADD CONSTRAINT leads_lead_source_check CHECK (lead_source = ANY (ARRAY['traffic'::text, 'inbound'::text, 'referral'::text, 'outbound'::text, 'ss'::text, 'bio'::text, 'other'::text]));
