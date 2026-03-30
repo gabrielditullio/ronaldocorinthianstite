@@ -56,10 +56,12 @@ export const STAGE_BORDER_COLORS: Record<string, string> = {
 };
 
 export const SOURCES = [
-  { key: "traffic", label: "Tráfego" },
-  { key: "inbound", label: "Inbound" },
+  { key: "traffic", label: "Tráfego Pago" },
+  { key: "inbound", label: "Orgânico" },
   { key: "referral", label: "Indicação" },
   { key: "outbound", label: "Prospecção" },
+  { key: "ss", label: "Social Selling" },
+  { key: "bio", label: "Bio Instagram" },
   { key: "other", label: "Outro" },
 ];
 

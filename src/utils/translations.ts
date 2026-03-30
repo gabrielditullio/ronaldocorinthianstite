@@ -3,6 +3,8 @@ export const leadSourceLabels: Record<string, string> = {
   'inbound': 'Orgânico',
   'referral': 'Indicação',
   'outbound': 'Outbound',
+  'ss': 'Social Selling',
+  'bio': 'Bio Instagram',
   'other': 'Outro',
 };
 
