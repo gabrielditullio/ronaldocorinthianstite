@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { getResetPasswordUrl } from "@/lib/app-url";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -190,7 +191,7 @@ export default function AdminPage() {
                           title="Enviar reset de senha"
                           onClick={async () => {
                             const { error } = await supabase.auth.resetPasswordForEmail(u.email, {
-                              redirectTo: `${window.location.origin}/reset-password`,
+                              redirectTo: getResetPasswordUrl(),
                             });
                             if (error) {
                               toast.error("Erro ao enviar email de reset.");
