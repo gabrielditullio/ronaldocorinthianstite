@@ -1,14 +1,7 @@
-// URL pública canônica usada para links em e-mails (recuperação de senha, etc).
-// Em produção sempre usa o domínio oficial; em dev/preview usa o origin atual.
-const PRODUCTION_URL = "https://biancacleto.com.br";
+// URL pública canônica usada em links enviados por e-mail (recuperação de senha, convites, etc).
+// Sempre aponta para o domínio oficial em produção, independente do origin atual.
+export const APP_PUBLIC_URL = "https://biancacleto.com.br";
 
-export function getAppUrl(): string {
-  if (typeof window === "undefined") return PRODUCTION_URL;
-  const host = window.location.hostname;
-  const isLocal =
-    host === "localhost" ||
-    host === "127.0.0.1" ||
-    host.endsWith(".lovableproject.com") ||
-    host.endsWith(".lovable.app");
-  return isLocal ? window.location.origin : PRODUCTION_URL;
+export function getResetPasswordUrl(): string {
+  return `${APP_PUBLIC_URL}/reset-password`;
 }
