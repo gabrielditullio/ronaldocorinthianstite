@@ -23,7 +23,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { toast } from "@/components/ui/sonner";
 import {
-  Search, ChevronLeft, ChevronRight, ArrowUpDown, Check, X, Download, Eye,
+  Search, ChevronLeft, ChevronRight, ArrowUpDown, Check, X, Download, Eye, KeyRound,
 } from "lucide-react";
 
 type SortKey = "email" | "full_name" | "subscription_status" | "created_at";
@@ -51,6 +51,8 @@ export default function AdminUsersPage() {
   const [sortAsc, setSortAsc] = useState(false);
   const [confirmAction, setConfirmAction] = useState<{ userId: string; action: "activate" | "deactivate" } | null>(null);
   const [detailUserId, setDetailUserId] = useState<string | null>(null);
+  const [resetEmail, setResetEmail] = useState<{ userId: string; email: string } | null>(null);
+  const [resetLoading, setResetLoading] = useState(false);
 
   const { data: users = [], isLoading } = useQuery({
     queryKey: ["admin-users"],
@@ -123,6 +125,30 @@ export default function AdminUsersPage() {
     },
     onError: () => toast.error("Erro ao atualizar status."),
   });
+
+  const sendPasswordReset = async (userId: string, email: string) => {
+    setResetLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) throw error;
+      if (profile?.id) {
+        await supabase.from("admin_action_logs").insert({
+          admin_user_id: profile.id,
+          target_user_id: userId,
+          action: "password_reset_sent",
+        });
+        queryClient.invalidateQueries({ queryKey: ["admin-action-logs"] });
+      }
+      toast.success(`Email de redefinição enviado para ${email}`);
+    } catch (e: any) {
+      toast.error(e?.message || "Erro ao enviar email de redefinição.");
+    } finally {
+      setResetLoading(false);
+      setResetEmail(null);
+    }
+  };
 
   const filtered = useMemo(() => {
     let list = users;
@@ -278,6 +304,15 @@ export default function AdminUsersPage() {
                           <Button size="sm" variant="ghost" className="text-xs h-7" onClick={() => setDetailUserId(u.id)}>
                             <Eye className="h-3 w-3 mr-1" /> Detalhes
                           </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-xs h-7"
+                            title="Reenviar email de redefinição de senha"
+                            onClick={() => setResetEmail({ userId: u.id, email: u.email })}
+                          >
+                            <KeyRound className="h-3 w-3" />
+                          </Button>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -322,6 +357,29 @@ export default function AdminUsersPage() {
       </AlertDialog>
 
       {/* Detail Drawer */}
+      <AlertDialog open={!!resetEmail} onOpenChange={(open) => { if (!open && !resetLoading) setResetEmail(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reenviar redefinição de senha?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Um email com link de redefinição será enviado para <strong>{resetEmail?.email}</strong>. O usuário poderá criar uma nova senha através do link.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={resetLoading}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={resetLoading}
+              onClick={(e) => {
+                e.preventDefault();
+                if (resetEmail) sendPasswordReset(resetEmail.userId, resetEmail.email);
+              }}
+            >
+              {resetLoading ? "Enviando..." : "Enviar email"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <Sheet open={!!detailUserId} onOpenChange={(open) => { if (!open) setDetailUserId(null); }}>
         <SheetContent className="w-[420px] sm:w-[480px] overflow-y-auto">
           <SheetHeader>
@@ -373,6 +431,13 @@ export default function AdminUsersPage() {
                     }
                   }}>
                     Re-sincronizar
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => setResetEmail({ userId: detailUser.id, email: detailUser.email })}
+                  >
+                    <KeyRound className="h-3 w-3 mr-1" /> Reenviar senha
                   </Button>
                 </div>
               </section>
