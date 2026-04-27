@@ -357,6 +357,29 @@ export default function AdminUsersPage() {
       </AlertDialog>
 
       {/* Detail Drawer */}
+      <AlertDialog open={!!resetEmail} onOpenChange={(open) => { if (!open && !resetLoading) setResetEmail(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reenviar redefinição de senha?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Um email com link de redefinição será enviado para <strong>{resetEmail?.email}</strong>. O usuário poderá criar uma nova senha através do link.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={resetLoading}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={resetLoading}
+              onClick={(e) => {
+                e.preventDefault();
+                if (resetEmail) sendPasswordReset(resetEmail.userId, resetEmail.email);
+              }}
+            >
+              {resetLoading ? "Enviando..." : "Enviar email"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <Sheet open={!!detailUserId} onOpenChange={(open) => { if (!open) setDetailUserId(null); }}>
         <SheetContent className="w-[420px] sm:w-[480px] overflow-y-auto">
           <SheetHeader>
