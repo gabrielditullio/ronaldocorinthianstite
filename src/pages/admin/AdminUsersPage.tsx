@@ -304,6 +304,15 @@ export default function AdminUsersPage() {
                           <Button size="sm" variant="ghost" className="text-xs h-7" onClick={() => setDetailUserId(u.id)}>
                             <Eye className="h-3 w-3 mr-1" /> Detalhes
                           </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-xs h-7"
+                            title="Reenviar email de redefinição de senha"
+                            onClick={() => setResetEmail({ userId: u.id, email: u.email })}
+                          >
+                            <KeyRound className="h-3 w-3" />
+                          </Button>
                         </div>
                       </TableCell>
                     </TableRow>
