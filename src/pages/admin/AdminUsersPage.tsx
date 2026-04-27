@@ -409,6 +409,13 @@ export default function AdminUsersPage() {
                   }}>
                     Re-sincronizar
                   </Button>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => setResetEmail({ userId: detailUser.id, email: detailUser.email })}
+                  >
+                    <KeyRound className="h-3 w-3 mr-1" /> Reenviar senha
+                  </Button>
                 </div>
               </section>
 
